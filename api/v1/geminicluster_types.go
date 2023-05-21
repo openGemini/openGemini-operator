@@ -23,13 +23,18 @@ import (
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+const (
+	ClusterProgressing = "progressing"
+)
 
 // GeminiClusterSpec defines the desired state of GeminiCluster
 type GeminiClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Version    string         `json:"version"`
+	Version string `json:"version"`
+	// +optianal
+	Paused     *bool          `json:"paused,omitempty"`
 	SQL        SQLSpec        `json:"sql"`
 	Meta       MetaSpec       `json:"meta"`
 	Store      StoreSpec      `json:"store"`
@@ -139,6 +144,9 @@ type GeminiClusterStatus struct {
 
 	CustomStatus  string `json:"customStatus,omitempty"`
 	StatusDetails string `json:"statusDetails,omitempty"`
+
+	// Conditions for cluster object
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true

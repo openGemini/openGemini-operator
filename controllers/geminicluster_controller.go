@@ -20,11 +20,12 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	opengeminioperatorv1 "github.com/openGemini/openGemini-operator/api/v1"
 )
@@ -57,27 +58,46 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	//TODO:Set Defaults
+
 	// Keep a copy of cluster prior to any manipulations.
 	before := cluster.DeepCopy()
 
-	if cluster.DeletionTimestamp.IsZero() {
+	// Handle delete
+	if !cluster.DeletionTimestamp.IsZero() {
 		log.Info("GeminiCluster deleted", "name", req.Name, "namespace", req.Namespace)
 		return ctrl.Result{}, nil
 	}
 
-	defer func() (reconcile.Result, error) {
+	defer func() (ctrl.Result, error) {
 		if !equality.Semantic.DeepEqual(before.Status, cluster.Status) {
 			// NOTE(cbandy): Kubernetes prior to v1.16.10 and v1.17.6 does not track
 			// managed fields on the status subresource: https://issue.k8s.io/88901
-			err := r.Client.Status().Patch(ctx, cluster, client.MergeFrom(before), )
+			err := r.Client.Status().Patch(ctx, cluster, client.MergeFrom(before))
 			if err != nil {
 				log.Error(err, "patching cluster status")
-				return reconcile.Result{}, err
+				return ctrl.Result{}, err
 			}
 			log.V(1).Info("patched cluster status")
 		}
-		return reconcile.Result{}, nil
+		return ctrl.Result{}, nil
 	}()
+
+	// handle paused
+	if cluster.Spec.Paused != nil && *cluster.Spec.Paused {
+		meta.SetStatusCondition(&cluster.Status.Conditions, metav1.Condition{
+			Type:               opengeminioperatorv1.ClusterProgressing,
+			Status:             metav1.ConditionFalse,
+			Reason:             "Paused",
+			Message:            "No spec changes will be applied and no other statuses will be updated.",
+			ObservedGeneration: cluster.GetGeneration(),
+		})
+		return ctrl.Result{}, nil
+	} else {
+		meta.RemoveStatusCondition(&cluster.Status.Conditions, opengeminioperatorv1.ClusterProgressing)
+	}
+
+	// reconciler resource
 
 	return ctrl.Result{}, nil
 }
