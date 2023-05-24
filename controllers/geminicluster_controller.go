@@ -18,16 +18,23 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	opengeminioperatorv1 "github.com/openGemini/openGemini-operator/api/v1"
+	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
+	"github.com/openGemini/openGemini-operator/pkg/configfile"
+	"github.com/openGemini/openGemini-operator/pkg/naming"
+	"github.com/openGemini/openGemini-operator/pkg/resources"
+	"github.com/openGemini/openGemini-operator/pkg/specs"
 )
 
 // GeminiClusterReconciler reconciles a GeminiCluster object
@@ -52,7 +59,7 @@ type GeminiClusterReconciler struct {
 func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	cluster := &opengeminioperatorv1.GeminiCluster{}
+	cluster := &opengeminiv1.GeminiCluster{}
 	if err := r.Get(ctx, req.NamespacedName, cluster); err != nil {
 		log.Error(err, "unable to fetch GeminiCluster")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -86,7 +93,7 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	// handle paused
 	if cluster.Spec.Paused != nil && *cluster.Spec.Paused {
 		meta.SetStatusCondition(&cluster.Status.Conditions, metav1.Condition{
-			Type:               opengeminioperatorv1.ClusterProgressing,
+			Type:               opengeminiv1.ClusterProgressing,
 			Status:             metav1.ConditionFalse,
 			Reason:             "Paused",
 			Message:            "No spec changes will be applied and no other statuses will be updated.",
@@ -94,10 +101,22 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		})
 		return ctrl.Result{}, nil
 	} else {
-		meta.RemoveStatusCondition(&cluster.Status.Conditions, opengeminioperatorv1.ClusterProgressing)
+		meta.RemoveStatusCondition(&cluster.Status.Conditions, opengeminiv1.ClusterProgressing)
 	}
 
 	// reconciler resource
+	ogConf, err := configfile.NewConfiguration()
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("cannot generate cluster configruation: %w", err)
+	}
+
+	if err := r.reconcileClusterConfigMap(ctx, cluster, ogConf); err != nil {
+		return ctrl.Result{}, fmt.Errorf("cannot create Cluster configmap objects: %w", err)
+	}
+
+	if err := r.reconcileClusterServices(ctx, cluster); err != nil {
+		return ctrl.Result{}, fmt.Errorf("cannot create Cluster service objects: %w", err)
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -105,6 +124,60 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 // SetupWithManager sets up the controller with the Manager.
 func (r *GeminiClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&opengeminioperatorv1.GeminiCluster{}).
+		For(&opengeminiv1.GeminiCluster{}).
 		Complete(r)
+}
+
+func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
+	ctx context.Context, cluster *opengeminiv1.GeminiCluster, opengeminiConf string,
+) error {
+	clusterConfigMap := &corev1.ConfigMap{ObjectMeta: naming.ClusterConfigMap(cluster)}
+	clusterConfigMap.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
+
+	cluster.SetInheritedMetadata(&clusterConfigMap.ObjectMeta)
+	if err := r.setControllerReference(cluster, clusterConfigMap); err != nil {
+		return fmt.Errorf("set controller reference failed: %w", err)
+	}
+
+	if err := resources.CreateIfNotFound(ctx, r.Client, clusterConfigMap); client.IgnoreAlreadyExists(err) != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *GeminiClusterReconciler) reconcileClusterServices(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
+	readWriteService := specs.CreateClusterReadWriteService(*cluster)
+	cluster.SetInheritedMetadata(&readWriteService.ObjectMeta)
+	if err := r.setControllerReference(cluster, readWriteService); err != nil {
+		return fmt.Errorf("set controller reference failed: %w", err)
+	}
+
+	if err := resources.CreateIfNotFound(ctx, r.Client, readWriteService); client.IgnoreAlreadyExists(err) != nil {
+		return err
+	}
+
+	MaintainService := specs.CreateClusterMaintainService(*cluster)
+	cluster.SetInheritedMetadata(&MaintainService.ObjectMeta)
+	if err := r.setControllerReference(cluster, MaintainService); err != nil {
+		return fmt.Errorf("set controller reference failed: %w", err)
+	}
+
+	if err := resources.CreateIfNotFound(ctx, r.Client, MaintainService); client.IgnoreAlreadyExists(err) != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *GeminiClusterReconciler) setControllerReference(
+	owner *opengeminiv1.GeminiCluster, controlled client.Object,
+) error {
+	return controllerutil.SetControllerReference(owner, controlled, r.Client.Scheme())
+}
+
+func (r *GeminiClusterReconciler) setOwnerReference(
+	owner *opengeminiv1.GeminiCluster, controlled client.Object,
+) error {
+	return controllerutil.SetOwnerReference(owner, controlled, r.Client.Scheme())
 }

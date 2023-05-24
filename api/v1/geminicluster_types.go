@@ -17,15 +17,15 @@ limitations under the License.
 package v1
 
 import (
+	"fmt"
+
+	"github.com/openGemini/openGemini-operator/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-const (
-	ClusterProgressing = "progressing"
-)
 
 // GeminiClusterSpec defines the desired state of GeminiCluster
 type GeminiClusterSpec struct {
@@ -34,7 +34,9 @@ type GeminiClusterSpec struct {
 
 	Version string `json:"version"`
 	// +optianal
-	Paused     *bool          `json:"paused,omitempty"`
+	Paused *bool `json:"paused,omitempty"`
+	// +optional
+	Metadata   *Metadata      `json:"metadata,omitempty"`
 	SQL        SQLSpec        `json:"sql"`
 	Meta       MetaSpec       `json:"meta"`
 	Store      StoreSpec      `json:"store"`
@@ -104,6 +106,29 @@ type AffinitySpec struct {
 	EnablePodAntiAffinity bool `json:"enablePodAntiAffinity"`
 }
 
+// Metadata contains metadata for custom resources
+type Metadata struct {
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+func (meta *Metadata) GetLabelsOrNil() map[string]string {
+	if meta == nil {
+		return nil
+	}
+	return meta.Labels
+}
+
+func (meta *Metadata) GetAnnotationsOrNil() map[string]string {
+	if meta == nil {
+		return nil
+	}
+	return meta.Annotations
+}
+
 // GeminiClusterStatus defines the observed state of GeminiCluster
 type GeminiClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
@@ -159,6 +184,22 @@ type GeminiCluster struct {
 
 	Spec   GeminiClusterSpec   `json:"spec,omitempty"`
 	Status GeminiClusterStatus `json:"status,omitempty"`
+}
+
+func (cluster *GeminiCluster) GetServiceMaintainName() string {
+	return fmt.Sprintf("%v%v", cluster.Name, ServiceMaintainSuffix)
+}
+
+func (cluster *GeminiCluster) GetServiceReadWriteName() string {
+	return fmt.Sprintf("%v%v", cluster.Name, ServiceReadWriteSuffix)
+}
+
+func (cluster *GeminiCluster) SetInheritedMetadata(obj *metav1.ObjectMeta) {
+	obj.Annotations = utils.MergeLabels(cluster.Spec.Metadata.GetAnnotationsOrNil())
+	obj.Labels = utils.MergeLabels(cluster.Spec.Metadata.GetLabelsOrNil(),
+		map[string]string{
+			LabelCluster: cluster.Name,
+		})
 }
 
 //+kubebuilder:object:root=true

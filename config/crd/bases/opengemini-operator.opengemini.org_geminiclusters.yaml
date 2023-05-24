@@ -260,6 +260,18 @@ spec:
                 - image
                 - parameters
                 type: object
+              metadata:
+                description: Metadata contains metadata for custom resources
+                properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                type: object
               monitoring:
                 properties:
                   type:
