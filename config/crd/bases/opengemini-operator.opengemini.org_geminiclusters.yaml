@@ -12,6 +12,8 @@ spec:
     kind: GeminiCluster
     listKind: GeminiClusterList
     plural: geminiclusters
+    shortNames:
+    - ogi
     singular: geminicluster
   scope: Namespaced
   versions:
@@ -42,6 +44,9 @@ spec:
                 required:
                 - enablePodAntiAffinity
                 type: object
+              enableSuperuserAccess:
+                default: false
+                type: boolean
               meta:
                 properties:
                   dataVolumeClaimSpec:
@@ -258,7 +263,6 @@ spec:
                 required:
                 - dataVolumeClaimSpec
                 - image
-                - parameters
                 type: object
               metadata:
                 description: Metadata contains metadata for custom resources
@@ -280,6 +284,7 @@ spec:
                 - type
                 type: object
               paused:
+                default: false
                 type: boolean
               sql:
                 properties:
@@ -332,7 +337,6 @@ spec:
                     type: object
                 required:
                 - image
-                - parameters
                 - port
                 type: object
               store:
@@ -555,15 +559,9 @@ spec:
                 required:
                 - dataVolumeClaimSpec
                 - image
-                - parameters
                 type: object
-              userSecret:
-                properties:
-                  name:
-                    type: string
-                required:
-                - name
-                type: object
+              superuserSecret:
+                type: string
               version:
                 type: string
             required:
@@ -572,7 +570,6 @@ spec:
             - monitoring
             - sql
             - store
-            - userSecret
             - version
             type: object
           status:

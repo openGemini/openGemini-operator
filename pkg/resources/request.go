@@ -8,8 +8,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type patchCondition[T client.Object] func(ctx context.Context, proposed, current T) bool
-
 type Request[T client.Object] struct {
 	shouldCreate bool
 	c            client.Client
@@ -24,6 +22,11 @@ func CreateIfNotFound[T client.Object](ctx context.Context, c client.Client, obj
 	return NewRequest[T](c).
 		CreateIfNotFound().
 		Execute(ctx, obj)
+}
+
+func (r *Request[T]) CreateIfNotFound() *Request[T] {
+	r.shouldCreate = true
+	return r
 }
 
 func (r *Request[T]) Execute(
@@ -41,9 +44,4 @@ func (r *Request[T]) Execute(
 	}
 
 	return nil
-}
-
-func (r *Request[T]) CreateIfNotFound() *Request[T] {
-	r.shouldCreate = true
-	return r
 }

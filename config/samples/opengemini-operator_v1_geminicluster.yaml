@@ -7,6 +7,46 @@ metadata:
     app.kubernetes.io/part-of: opengemini-operator
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: opengemini-operator
-  name: geminicluster-sample
+  name: geminicluster-sample-1
 spec:
-  # TODO(user): Add fields here
+  affinity:
+    enablePodAntiAffinity: true
+  enableSuperuserAccess: false
+  monitoring:
+    type: string
+  paused: false
+  meta:
+    dataVolumeClaimSpec:
+      accessModes:
+        - "ReadWriteMany"
+      resources:
+        requests:
+          storage: 1Gi
+    image: registry.woqutech.com/xiewei/opengemini:v1.0.1
+    replicas: 3
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 512Mi
+  sql:
+    image: registry.woqutech.com/xiewei/opengemini:v1.0.1
+    port: "8086"
+    replicas: 2
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 512Mi
+  store:
+    dataVolumeClaimSpec:
+      accessModes:
+        - "ReadWriteMany"
+      resources:
+        requests:
+          storage: 1Gi
+    image: registry.woqutech.com/xiewei/opengemini:v1.0.1
+    replicas: 3
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 512Mi
+  version: v1

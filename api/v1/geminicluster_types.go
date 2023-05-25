@@ -34,6 +34,7 @@ type GeminiClusterSpec struct {
 
 	Version string `json:"version"`
 	// +optianal
+	// +kubebuilder:default:=false
 	Paused *bool `json:"paused,omitempty"`
 	// +optional
 	Metadata   *Metadata      `json:"metadata,omitempty"`
@@ -41,19 +42,24 @@ type GeminiClusterSpec struct {
 	Meta       MetaSpec       `json:"meta"`
 	Store      StoreSpec      `json:"store"`
 	Monitoring MonitoringSpec `json:"monitoring"`
-	UserSecret UserSecretSpec `json:"userSecret"`
 	Affinity   AffinitySpec   `json:"affinity"`
+
+	// +optional
+	SuperuserSecretName string `json:"superuserSecret,omitempty"`
+	// +kubebuilder:default:=false
+	EnableSuperuserAccess *bool `json:"enableSuperuserAccess,omitempty"`
 }
 
 type SQLSpec struct {
 	// +optional
 	// +kubebuilder:default=1
 	// +kubebuilder:validation:Minimum=1
-	Replicas   *int32                      `json:"replicas,omitempty"`
-	Image      string                      `json:"image"`
-	Port       string                      `json:"port"`
-	Resource   corev1.ResourceRequirements `json:"resources,omitempty"`
-	Parameters SQLParamsSpec               `json:"parameters"`
+	Replicas  *int32                      `json:"replicas,omitempty"`
+	Image     string                      `json:"image"`
+	Port      string                      `json:"port"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// +optional
+	Parameters SQLParamsSpec `json:"parameters"`
 }
 
 type SQLParamsSpec struct {
@@ -69,8 +75,9 @@ type MetaSpec struct {
 	Image    string `json:"image"`
 	// +kubebuilder:validation:Required
 	DataVolumeClaimSpec corev1.PersistentVolumeClaimSpec `json:"dataVolumeClaimSpec"`
-	Resource            corev1.ResourceRequirements      `json:"resources,omitempty"`
-	Parameters          MetaParamsSpec                   `json:"parameters"`
+	Resources           corev1.ResourceRequirements      `json:"resources,omitempty"`
+	// +optional
+	Parameters MetaParamsSpec `json:"parameters"`
 }
 
 type MetaParamsSpec struct {
@@ -85,8 +92,9 @@ type StoreSpec struct {
 	Image    string `json:"image"`
 	// +kubebuilder:validation:Required
 	DataVolumeClaimSpec corev1.PersistentVolumeClaimSpec `json:"dataVolumeClaimSpec"`
-	Resource            corev1.ResourceRequirements      `json:"resources,omitempty"`
-	Parameters          StoreParamsSpec                  `json:"parameters"`
+	Resources           corev1.ResourceRequirements      `json:"resources,omitempty"`
+	// +optional
+	Parameters StoreParamsSpec `json:"parameters"`
 }
 
 type StoreParamsSpec struct {
@@ -96,10 +104,6 @@ type StoreParamsSpec struct {
 
 type MonitoringSpec struct {
 	Type string `json:"type"`
-}
-
-type UserSecretSpec struct {
-	Name string `json:"name"`
 }
 
 type AffinitySpec struct {
@@ -175,6 +179,7 @@ type GeminiClusterStatus struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:shortName=ogi
 //+kubebuilder:subresource:status
 
 // GeminiCluster is the Schema for the geminiclusters API
@@ -192,6 +197,22 @@ func (cluster *GeminiCluster) GetServiceMaintainName() string {
 
 func (cluster *GeminiCluster) GetServiceReadWriteName() string {
 	return fmt.Sprintf("%v%v", cluster.Name, ServiceReadWriteSuffix)
+}
+
+func (cluster *GeminiCluster) GetEnableSuperuserAccess() bool {
+	if cluster.Spec.EnableSuperuserAccess != nil {
+		return *cluster.Spec.EnableSuperuserAccess
+	}
+
+	return true
+}
+
+func (cluster *GeminiCluster) GetSuperuserSecretName() string {
+	if cluster.Spec.SuperuserSecretName != "" {
+		return cluster.Spec.SuperuserSecretName
+	}
+
+	return fmt.Sprintf("%v%v", cluster.Name, SuperUserSecretSuffix)
 }
 
 func (cluster *GeminiCluster) SetInheritedMetadata(obj *metav1.ObjectMeta) {

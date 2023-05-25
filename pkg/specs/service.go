@@ -41,7 +41,7 @@ func CreateClusterReadWriteService(cluster opengeminiv1.GeminiCluster) *corev1.S
 			Type: corev1.ServiceTypeClusterIP,
 			Ports: []corev1.ServicePort{
 				{
-					Name:       "readWrite",
+					Name:       "readwrite",
 					Protocol:   corev1.ProtocolTCP,
 					TargetPort: intstr.FromInt(opengemini.HttpPort),
 					Port:       opengemini.HttpPort,

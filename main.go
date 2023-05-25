@@ -91,6 +91,7 @@ func main() {
 
 	if err = (&controllers.GeminiClusterReconciler{
 		Client: mgr.GetClient(),
+		Owner:  controllers.ControllerManagerName,
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GeminiCluster")
