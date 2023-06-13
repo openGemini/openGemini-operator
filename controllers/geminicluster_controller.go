@@ -113,12 +113,7 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	// reconciler resource
-	ogConf, err := configfile.NewConfiguration()
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("cannot generate cluster configruation: %w", err)
-	}
-
-	if err := r.reconcileClusterConfigMap(ctx, cluster, ogConf); err != nil {
+	if err := r.reconcileClusterConfigMap(ctx, cluster); err != nil {
 		return ctrl.Result{}, fmt.Errorf("cannot create Cluster configmap objects: %w", err)
 	}
 
@@ -139,11 +134,17 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 // +kubebuilder:rbac:groups="",resources="configmaps",verbs={get,create}
 
-func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
-	ctx context.Context, cluster *opengeminiv1.GeminiCluster, opengeminiConf string,
-) error {
+func (r *GeminiClusterReconciler) reconcileClusterConfigMap(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
 	clusterConfigMap := &corev1.ConfigMap{ObjectMeta: naming.ClusterConfigMap(cluster)}
 	clusterConfigMap.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
+
+	conf, err := configfile.NewConfiguration()
+	if err != nil {
+		return fmt.Errorf("cannot generate cluster configruation: %w", err)
+	}
+	clusterConfigMap.Data = map[string]string{
+		naming.ConfigurationFile: conf,
+	}
 
 	cluster.SetInheritedMetadata(&clusterConfigMap.ObjectMeta)
 	if err := r.setControllerReference(cluster, clusterConfigMap); err != nil {
