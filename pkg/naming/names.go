@@ -45,10 +45,10 @@ func GenerateStoreInstance(cluster *opengeminiv1.GeminiCluster, index int) metav
 	}
 }
 
-func GenerateSqlInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1.ObjectMeta {
+func GenerateSqlInstance(cluster *opengeminiv1.GeminiCluster) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
-		Name:      cluster.Name + "-" + "sql" + "-" + fmt.Sprintf("%d", index),
+		Name:      cluster.Name + "-" + "sql",
 	}
 }
 

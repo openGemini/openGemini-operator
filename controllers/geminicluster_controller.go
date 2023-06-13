@@ -240,10 +240,8 @@ func (r *GeminiClusterReconciler) reconcileClusterInstances(ctx context.Context,
 			return err
 		}
 	}
-	for i := 0; i < int(*cluster.Spec.SQL.Replicas); i++ {
-		if err := r.reconcileSqlInstance(ctx, cluster, i); err != nil {
-			return err
-		}
+	if err := r.reconcileSqlInstance(ctx, cluster); err != nil {
+		return err
 	}
 	return nil
 }

@@ -1,7 +1,7 @@
 apiVersion: opengemini-operator.opengemini.org/v1
 kind: GeminiCluster
 metadata:
-  name: test003
+  name: test004
   namespace: opengemini
 spec:
   affinity:
@@ -13,7 +13,7 @@ spec:
   meta:
     dataVolumeClaimSpec:
       accessModes:
-        - "ReadWriteMany"
+        - "ReadWriteOnce"
       resources:
         requests:
           storage: 1Gi
@@ -34,7 +34,7 @@ spec:
   store:
     dataVolumeClaimSpec:
       accessModes:
-        - "ReadWriteMany"
+        - "ReadWriteOnce"
       resources:
         requests:
           storage: 1Gi

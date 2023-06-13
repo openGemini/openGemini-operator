@@ -75,15 +75,15 @@ func (r *GeminiClusterReconciler) reconcileStoreInstance(ctx context.Context, cl
 
 // +kubebuilder:rbac:groups="apps",resources="deployments",verbs={get,create,patch}
 
-func (r *GeminiClusterReconciler) reconcileSqlInstance(ctx context.Context, cluster *opengeminiv1.GeminiCluster, index int) error {
+func (r *GeminiClusterReconciler) reconcileSqlInstance(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
 	instance := &appsv1.Deployment{}
 	instance.SetGroupVersionKind(appsv1.SchemeGroupVersion.WithKind("Deployment"))
-	instance.ObjectMeta = naming.GenerateSqlInstance(cluster, index)
+	instance.ObjectMeta = naming.GenerateSqlInstance(cluster)
 	if err := r.setControllerReference(cluster, instance); err != nil {
 		return err
 	}
 
-	generateInstanceDeploymentIntent(ctx, cluster, index, instance)
+	generateInstanceDeploymentIntent(ctx, cluster, instance)
 
 	sql.InstancePod(ctx, cluster, &instance.Spec.Template.Spec)
 	if err := r.apply(ctx, instance); err != nil {
@@ -128,7 +128,7 @@ func generateInstanceStatefulSetIntent(_ context.Context, cluster *opengeminiv1.
 	sts.Spec.Replicas = &[]int32{1}[0]
 }
 
-func generateInstanceDeploymentIntent(_ context.Context, cluster *opengeminiv1.GeminiCluster, index int, deploy *appsv1.Deployment) {
+func generateInstanceDeploymentIntent(_ context.Context, cluster *opengeminiv1.GeminiCluster, deploy *appsv1.Deployment) {
 	deploy.Annotations = utils.MergeLabels(
 		cluster.Spec.Metadata.GetAnnotationsOrNil())
 	deploy.Labels = utils.MergeLabels(
@@ -160,5 +160,5 @@ func generateInstanceDeploymentIntent(_ context.Context, cluster *opengeminiv1.G
 	deploy.Spec.Template.Spec.EnableServiceLinks = &[]bool{false}[0]
 
 	deploy.Spec.RevisionHistoryLimit = &[]int32{0}[0]
-	deploy.Spec.Replicas = &[]int32{1}[0]
+	deploy.Spec.Replicas = cluster.Spec.SQL.Replicas
 }
