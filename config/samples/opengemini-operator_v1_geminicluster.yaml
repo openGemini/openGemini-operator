@@ -1,13 +1,8 @@
 apiVersion: opengemini-operator.opengemini.org/v1
 kind: GeminiCluster
 metadata:
-  labels:
-    app.kubernetes.io/name: geminicluster
-    app.kubernetes.io/instance: geminicluster-sample
-    app.kubernetes.io/part-of: opengemini-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: opengemini-operator
-  name: geminicluster-sample-1
+  name: test003
+  namespace: opengemini
 spec:
   affinity:
     enablePodAntiAffinity: true

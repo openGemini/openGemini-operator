@@ -34,21 +34,21 @@ func ClusterConfigMap(cluster *opengeminiv1.GeminiCluster) metav1.ObjectMeta {
 func GenerateMetaInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
-		Name:      cluster.Name + "-" + "meta" + "-" + fmt.Sprintf("%2d", index),
+		Name:      cluster.Name + "-" + "meta" + "-" + fmt.Sprintf("%d", index),
 	}
 }
 
 func GenerateStoreInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
-		Name:      cluster.Name + "-" + "data" + "-" + fmt.Sprintf("%2d", index),
+		Name:      cluster.Name + "-" + "data" + "-" + fmt.Sprintf("%d", index),
 	}
 }
 
 func GenerateSqlInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
-		Name:      cluster.Name + "-" + "sql" + "-" + fmt.Sprintf("%2d", index),
+		Name:      cluster.Name + "-" + "sql" + "-" + fmt.Sprintf("%d", index),
 	}
 }
 

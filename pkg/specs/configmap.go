@@ -13,7 +13,7 @@ func ConfigFileConfigmapProjection(configmapName string) *corev1.ConfigMapProjec
 		Items: []corev1.KeyToPath{
 			{
 				Key:  naming.ConfigurationFile,
-				Path: naming.ConfigurationFilePath,
+				Path: naming.ConfigurationFile,
 			},
 		},
 	}

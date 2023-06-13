@@ -71,6 +71,7 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		log.Error(err, "unable to fetch GeminiCluster")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	log.Info("Starting Reconcile Cluster object", "name", cluster.Name, "namespace", cluster.Namespace)
 
 	//TODO:Set Defaults
 
@@ -230,13 +231,19 @@ func (r *GeminiClusterReconciler) reconcileSuperuserSecret(ctx context.Context, 
 func (r *GeminiClusterReconciler) reconcileClusterInstances(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
 
 	for i := 0; i < int(*cluster.Spec.Meta.Replicas); i++ {
-		r.reconcileMetaInstance(ctx, cluster, i)
+		if err := r.reconcileMetaInstance(ctx, cluster, i); err != nil {
+			return err
+		}
 	}
 	for i := 0; i < int(*cluster.Spec.Store.Replicas); i++ {
-		r.reconcileStoreInstance(ctx, cluster, i)
+		if err := r.reconcileStoreInstance(ctx, cluster, i); err != nil {
+			return err
+		}
 	}
 	for i := 0; i < int(*cluster.Spec.SQL.Replicas); i++ {
-		r.reconcileSqlInstance(ctx, cluster, i)
+		if err := r.reconcileSqlInstance(ctx, cluster, i); err != nil {
+			return err
+		}
 	}
 	return nil
 }
