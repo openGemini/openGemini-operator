@@ -2,6 +2,7 @@ package naming
 
 import (
 	"fmt"
+	"path"
 
 	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -16,12 +17,12 @@ const (
 
 	ContainerMeta  = "meta"
 	ContainerStore = "store"
+	ContainerSql   = "sql"
 
 	PortMeta  = ""
 	PortStore = ""
 
-	ConfigurationFile     = "opengemini.conf"
-	ConfigurationFilePath = "/etc/opengemini"
+	ConfigurationFile = "opengemini.conf"
 )
 
 func ClusterConfigMap(cluster *opengeminiv1.GeminiCluster) metav1.ObjectMeta {
@@ -31,6 +32,10 @@ func ClusterConfigMap(cluster *opengeminiv1.GeminiCluster) metav1.ObjectMeta {
 	}
 }
 
+func ConfigFilePath() string {
+	return path.Join(ConfigMountPath, ConfigurationFile)
+}
+
 func GenerateMetaInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
@@ -38,10 +43,14 @@ func GenerateMetaInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1
 	}
 }
 
+func GenerateMetaHeadlessSvc(cluster *opengeminiv1.GeminiCluster, index int) string {
+	return fmt.Sprintf("%s.%s.svc.cluster.local", GenerateMetaInstance(cluster, index).Name, cluster.Namespace)
+}
+
 func GenerateStoreInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
-		Name:      cluster.Name + "-" + "data" + "-" + fmt.Sprintf("%d", index),
+		Name:      cluster.Name + "-" + "store" + "-" + fmt.Sprintf("%d", index),
 	}
 }
 

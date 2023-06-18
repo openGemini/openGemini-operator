@@ -55,10 +55,32 @@ func InstancePod(
 	}
 
 	container := corev1.Container{
-		Name: naming.ContainerStore,
-
+		Name:      naming.ContainerStore,
+		Command:   []string{"entrypoint.sh"},
 		Image:     inCluster.Spec.Store.Image,
 		Resources: inCluster.Spec.Store.Resources,
+		Env: []corev1.EnvVar{
+			{
+				Name: "HOST_IP",
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "status.podIP",
+					},
+				},
+			},
+			{
+				Name:  "DATA_DIR",
+				Value: naming.DataMountPath,
+			},
+			{
+				Name:  "CONFIG_PATH",
+				Value: naming.ConfigFilePath(),
+			},
+			{
+				Name:  "APP",
+				Value: "store",
+			},
+		},
 
 		Ports: []corev1.ContainerPort{{
 			Name:          naming.PortStore,

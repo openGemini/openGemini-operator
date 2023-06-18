@@ -26,6 +26,7 @@ func (r *GeminiClusterReconciler) reconcileMetaInstance(ctx context.Context, clu
 	}
 
 	generateInstanceStatefulSetIntent(ctx, cluster, index, instance)
+	instance.Spec.ServiceName = instance.Name
 
 	pvc := &corev1.PersistentVolumeClaim{}
 	pvc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("PersistentVolumeClaim"))
@@ -36,7 +37,7 @@ func (r *GeminiClusterReconciler) reconcileMetaInstance(ctx context.Context, clu
 	pvc.Spec = cluster.Spec.Meta.DataVolumeClaimSpec
 	instance.Spec.VolumeClaimTemplates = append(instance.Spec.VolumeClaimTemplates, *pvc)
 
-	meta.InstancePod(ctx, cluster, pvc.Name, &instance.Spec.Template.Spec)
+	meta.InstancePod(ctx, cluster, pvc.Name, instance.Name, &instance.Spec.Template.Spec)
 
 	if err := r.apply(ctx, instance); err != nil {
 		return err
@@ -124,7 +125,6 @@ func generateInstanceStatefulSetIntent(_ context.Context, cluster *opengeminiv1.
 	sts.Spec.Template.Spec.EnableServiceLinks = &[]bool{false}[0]
 
 	sts.Spec.RevisionHistoryLimit = &[]int32{0}[0]
-	sts.Spec.ServiceName = sts.Name
 	sts.Spec.Replicas = &[]int32{1}[0]
 }
 

@@ -138,7 +138,7 @@ func (r *GeminiClusterReconciler) reconcileClusterConfigMap(ctx context.Context,
 	clusterConfigMap := &corev1.ConfigMap{ObjectMeta: naming.ClusterConfigMap(cluster)}
 	clusterConfigMap.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
 
-	conf, err := configfile.NewConfiguration()
+	conf, err := configfile.NewConfiguration(cluster)
 	if err != nil {
 		return fmt.Errorf("cannot generate cluster configruation: %w", err)
 	}
@@ -161,7 +161,7 @@ func (r *GeminiClusterReconciler) reconcileClusterConfigMap(ctx context.Context,
 // +kubebuilder:rbac:groups="",resources="services",verbs={get,create}
 
 func (r *GeminiClusterReconciler) reconcileClusterServices(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
-	readWriteService := specs.CreateClusterReadWriteService(*cluster)
+	readWriteService := specs.CreateClusterReadWriteService(cluster)
 	cluster.SetInheritedMetadata(&readWriteService.ObjectMeta)
 	if err := r.setControllerReference(cluster, readWriteService); err != nil {
 		return fmt.Errorf("set controller reference failed: %w", err)
@@ -171,7 +171,7 @@ func (r *GeminiClusterReconciler) reconcileClusterServices(ctx context.Context, 
 		return err
 	}
 
-	MaintainService := specs.CreateClusterMaintainService(*cluster)
+	MaintainService := specs.CreateClusterMaintainService(cluster)
 	cluster.SetInheritedMetadata(&MaintainService.ObjectMeta)
 	if err := r.setControllerReference(cluster, MaintainService); err != nil {
 		return fmt.Errorf("set controller reference failed: %w", err)
@@ -179,6 +179,18 @@ func (r *GeminiClusterReconciler) reconcileClusterServices(ctx context.Context, 
 
 	if err := resources.CreateIfNotFound(ctx, r.Client, MaintainService); client.IgnoreAlreadyExists(err) != nil {
 		return err
+	}
+
+	metaHeadlessSvcs := specs.CreateMetaHeadlessServices(cluster)
+	for _, svc := range metaHeadlessSvcs {
+		cluster.SetInheritedMetadata(&svc.ObjectMeta)
+		if err := r.setControllerReference(cluster, svc); err != nil {
+			return fmt.Errorf("set controller reference failed: %w", err)
+		}
+
+		if err := resources.CreateIfNotFound(ctx, r.Client, svc); client.IgnoreAlreadyExists(err) != nil {
+			return err
+		}
 	}
 
 	return nil

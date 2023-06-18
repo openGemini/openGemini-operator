@@ -19,6 +19,5 @@ func RestrictedSecurityContext() *corev1.SecurityContext {
 		},
 		Privileged:             &[]bool{false}[0],
 		ReadOnlyRootFilesystem: &[]bool{true}[0],
-		RunAsNonRoot:           &[]bool{true}[0],
 	}
 }

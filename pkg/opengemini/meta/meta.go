@@ -2,6 +2,7 @@ package meta
 
 import (
 	"context"
+	"fmt"
 
 	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	"github.com/openGemini/openGemini-operator/pkg/naming"
@@ -27,7 +28,7 @@ func ConfigVolumeMount() corev1.VolumeMount {
 func InstancePod(
 	ctx context.Context,
 	inCluster *opengeminiv1.GeminiCluster,
-	inDataVolumeName string,
+	inDataVolumeName, inInstanceName string,
 	outInstancePod *corev1.PodSpec,
 ) {
 	configVolumeMount := ConfigVolumeMount()
@@ -55,10 +56,36 @@ func InstancePod(
 	}
 
 	container := corev1.Container{
-		Name: naming.ContainerMeta,
-
+		Name:      naming.ContainerMeta,
+		Command:   []string{"entrypoint.sh"},
 		Image:     inCluster.Spec.Meta.Image,
 		Resources: inCluster.Spec.Meta.Resources,
+		Env: []corev1.EnvVar{
+			{
+				Name: "HOST_IP",
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "status.podIP",
+					},
+				},
+			},
+			{
+				Name:  "DATA_DIR",
+				Value: naming.DataMountPath,
+			},
+			{
+				Name:  "CONFIG_PATH",
+				Value: naming.ConfigFilePath(),
+			},
+			{
+				Name:  "APP",
+				Value: "meta",
+			},
+			{
+				Name:  "DOMAIN",
+				Value: fmt.Sprintf("%s.%s.svc.cluster.local", inInstanceName, inCluster.Namespace),
+			},
+		},
 
 		Ports: []corev1.ContainerPort{{
 			Name:          naming.PortMeta,
