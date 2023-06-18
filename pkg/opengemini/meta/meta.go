@@ -8,6 +8,7 @@ import (
 	"github.com/openGemini/openGemini-operator/pkg/naming"
 	"github.com/openGemini/openGemini-operator/pkg/specs"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func DataVolumeMount() corev1.VolumeMount {
@@ -92,6 +93,15 @@ func InstancePod(
 			ContainerPort: 666,
 			Protocol:      corev1.ProtocolTCP,
 		}},
+
+		ReadinessProbe: &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/debug?witch=raft-stat",
+					Port: intstr.FromInt(8091),
+				},
+			},
+		},
 
 		SecurityContext: specs.RestrictedSecurityContext(),
 		VolumeMounts: []corev1.VolumeMount{
