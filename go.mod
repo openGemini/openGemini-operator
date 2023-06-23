@@ -3,10 +3,10 @@ module github.com/openGemini/openGemini-operator
 go 1.19
 
 require (
+	github.com/BurntSushi/toml v1.3.2
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
 	github.com/sethvargo/go-password v0.2.0
-	gopkg.in/ini.v1 v1.67.0
 	k8s.io/api v0.25.0
 	k8s.io/apimachinery v0.25.0
 	k8s.io/client-go v0.25.0
