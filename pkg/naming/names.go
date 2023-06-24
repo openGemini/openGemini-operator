@@ -15,6 +15,10 @@ const (
 	ConfigVolume    = "config-volume"
 	ConfigMountPath = "/etc/opengemini"
 
+	InstanceMeta  = "meta"
+	InstanceStore = "store"
+	InstanceSql   = "sql"
+
 	ContainerMeta  = "meta"
 	ContainerStore = "store"
 	ContainerSql   = "sql"

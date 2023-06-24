@@ -72,7 +72,7 @@ func CreateMetaHeadlessServices(cluster *opengeminiv1.GeminiCluster) []*corev1.S
 					cluster.Spec.Metadata.GetLabelsOrNil(),
 					map[string]string{
 						opengeminiv1.LabelCluster:     cluster.Name,
-						opengeminiv1.LabelInstanceSet: "meta",
+						opengeminiv1.LabelInstanceSet: naming.InstanceMeta,
 						opengeminiv1.LabelInstance:    metaInstanceName,
 					}),
 			},

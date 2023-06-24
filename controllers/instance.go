@@ -25,7 +25,7 @@ func (r *GeminiClusterReconciler) reconcileMetaInstance(ctx context.Context, clu
 		return err
 	}
 
-	generateInstanceStatefulSetIntent(ctx, cluster, index, instance)
+	generateInstanceStatefulSetIntent(ctx, cluster, naming.InstanceMeta, instance)
 	instance.Spec.ServiceName = instance.Name
 
 	pvc := &corev1.PersistentVolumeClaim{}
@@ -56,7 +56,7 @@ func (r *GeminiClusterReconciler) reconcileStoreInstance(ctx context.Context, cl
 		return err
 	}
 
-	generateInstanceStatefulSetIntent(ctx, cluster, index, instance)
+	generateInstanceStatefulSetIntent(ctx, cluster, naming.InstanceStore, instance)
 
 	pvc := &corev1.PersistentVolumeClaim{}
 	pvc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("PersistentVolumeClaim"))
@@ -84,7 +84,7 @@ func (r *GeminiClusterReconciler) reconcileSqlInstance(ctx context.Context, clus
 		return err
 	}
 
-	generateInstanceDeploymentIntent(ctx, cluster, instance)
+	generateInstanceDeploymentIntent(ctx, cluster, naming.InstanceSql, instance)
 
 	sql.InstancePod(ctx, cluster, &instance.Spec.Template.Spec)
 	if err := r.apply(ctx, instance); err != nil {
@@ -93,20 +93,20 @@ func (r *GeminiClusterReconciler) reconcileSqlInstance(ctx context.Context, clus
 	return nil
 }
 
-func generateInstanceStatefulSetIntent(_ context.Context, cluster *opengeminiv1.GeminiCluster, index int, sts *appsv1.StatefulSet) {
+func generateInstanceStatefulSetIntent(_ context.Context, cluster *opengeminiv1.GeminiCluster, setName string, sts *appsv1.StatefulSet) {
 	sts.Annotations = utils.MergeLabels(
 		cluster.Spec.Metadata.GetAnnotationsOrNil())
 	sts.Labels = utils.MergeLabels(
 		cluster.Spec.Metadata.GetLabelsOrNil(),
 		map[string]string{
 			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: "meta",
+			opengeminiv1.LabelInstanceSet: setName,
 			opengeminiv1.LabelInstance:    sts.Name,
 		})
 	sts.Spec.Selector = &metav1.LabelSelector{
 		MatchLabels: map[string]string{
 			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: "meta",
+			opengeminiv1.LabelInstanceSet: setName,
 			opengeminiv1.LabelInstance:    sts.Name,
 		},
 	}
@@ -117,7 +117,7 @@ func generateInstanceStatefulSetIntent(_ context.Context, cluster *opengeminiv1.
 		cluster.Spec.Metadata.GetLabelsOrNil(),
 		map[string]string{
 			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: "meta",
+			opengeminiv1.LabelInstanceSet: setName,
 			opengeminiv1.LabelInstance:    sts.Name,
 		})
 	sts.Spec.Template.Spec.RestartPolicy = corev1.RestartPolicyAlways
@@ -128,20 +128,20 @@ func generateInstanceStatefulSetIntent(_ context.Context, cluster *opengeminiv1.
 	sts.Spec.Replicas = &[]int32{1}[0]
 }
 
-func generateInstanceDeploymentIntent(_ context.Context, cluster *opengeminiv1.GeminiCluster, deploy *appsv1.Deployment) {
+func generateInstanceDeploymentIntent(_ context.Context, cluster *opengeminiv1.GeminiCluster, setName string, deploy *appsv1.Deployment) {
 	deploy.Annotations = utils.MergeLabels(
 		cluster.Spec.Metadata.GetAnnotationsOrNil())
 	deploy.Labels = utils.MergeLabels(
 		cluster.Spec.Metadata.GetLabelsOrNil(),
 		map[string]string{
 			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: "sql",
+			opengeminiv1.LabelInstanceSet: setName,
 			opengeminiv1.LabelInstance:    deploy.Name,
 		})
 	deploy.Spec.Selector = &metav1.LabelSelector{
 		MatchLabels: map[string]string{
 			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: "sql",
+			opengeminiv1.LabelInstanceSet: setName,
 			opengeminiv1.LabelInstance:    deploy.Name,
 		},
 	}
@@ -152,7 +152,7 @@ func generateInstanceDeploymentIntent(_ context.Context, cluster *opengeminiv1.G
 		cluster.Spec.Metadata.GetLabelsOrNil(),
 		map[string]string{
 			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: "sql",
+			opengeminiv1.LabelInstanceSet: setName,
 			opengeminiv1.LabelInstance:    deploy.Name,
 		})
 	deploy.Spec.Template.Spec.RestartPolicy = corev1.RestartPolicyAlways

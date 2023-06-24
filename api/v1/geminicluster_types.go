@@ -133,48 +133,46 @@ func (meta *Metadata) GetAnnotationsOrNil() map[string]string {
 	return meta.Annotations
 }
 
+type InstanceSetStatus struct {
+	Name string `json:"name"`
+
+	// Total number of ready pods.
+	// +optional
+	ReadyReplicas int32 `json:"readyReplicas,omitempty"`
+
+	// Total number of pods.
+	// +optional
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// Total number of pods that have the desired specification.
+	// +optional
+	UpdatedReplicas int32 `json:"updatedReplicas,omitempty"`
+}
+
 // GeminiClusterStatus defines the observed state of GeminiCluster
 type GeminiClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// observedGeneration is the most recent generation observed for this StatefulSet. It corresponds to the
-	// StatefulSet's generation, which is updated on mutation by the API Server.
+	// observedGeneration represents the .metadata.generation on which the status was based.
 	// +optional
-	ObservedGeneration *int64 `json:"observedGeneration,omitempty" protobuf:"varint,1,opt,name=observedGeneration"`
+	// +kubebuilder:validation:Minimum=0
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
-	// replicas is the number of Pods created by the StatefulSet controller.
-	Replicas int32 `json:"replicas" protobuf:"varint,2,opt,name=replicas"`
-
-	// readyReplicas is the number of Pods created by the StatefulSet controller that have a Ready Condition.
-	ReadyReplicas int32 `json:"readyReplicas,omitempty" protobuf:"varint,3,opt,name=readyReplicas"`
-
-	// currentReplicas is the number of Pods created by the StatefulSet controller from the StatefulSet version
-	// indicated by currentRevision.
-	CurrentReplicas int32 `json:"currentReplicas,omitempty" protobuf:"varint,4,opt,name=currentReplicas"`
-
-	// updatedReplicas is the number of Pods created by the StatefulSet controller from the StatefulSet version
-	// indicated by updateRevision.
-	UpdatedReplicas int32 `json:"updatedReplicas,omitempty" protobuf:"varint,5,opt,name=updatedReplicas"`
-
-	// currentRevision, if not empty, indicates the version of the StatefulSet used to generate Pods in the
-	// sequence [0,currentReplicas).
-	CurrentRevision string `json:"currentRevision,omitempty" protobuf:"bytes,6,opt,name=currentRevision"`
-
-	// updateRevision, if not empty, indicates the version of the StatefulSet used to generate Pods in the sequence
-	// [replicas-updatedReplicas,replicas)
-	UpdateRevision string `json:"updateRevision,omitempty" protobuf:"bytes,7,opt,name=updateRevision"`
-
-	// collisionCount is the count of hash collisions for the StatefulSet. The StatefulSet controller
-	// uses this field as a collision avoidance mechanism when it needs to create the name for the
-	// newest ControllerRevision.
+	// Current state of instances.
+	// +listType=map
+	// +listMapKey=name
 	// +optional
-	CollisionCount *int32 `json:"collisionCount,omitempty" protobuf:"varint,9,opt,name=collisionCount"`
+	InstanceSets []InstanceSetStatus `json:"instances,omitempty"`
 
 	CustomStatus  string `json:"customStatus,omitempty"`
 	StatusDetails string `json:"statusDetails,omitempty"`
 
-	// Conditions for cluster object
+	// conditions represent the observations of cluster's current state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +operator-sdk:csv:customresourcedefinitions:type=status,xDescriptors={"urn:alm:descriptor:io.kubernetes.conditions"}
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 

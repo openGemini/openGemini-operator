@@ -84,18 +84,17 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
+	result := ctrl.Result{}
 	defer func() (ctrl.Result, error) {
 		if !equality.Semantic.DeepEqual(before.Status, cluster.Status) {
-			// NOTE(cbandy): Kubernetes prior to v1.16.10 and v1.17.6 does not track
-			// managed fields on the status subresource: https://issue.k8s.io/88901
-			err := r.Client.Status().Patch(ctx, cluster, client.MergeFrom(before))
+			err := r.Client.Status().Patch(ctx, cluster, client.MergeFrom(before), r.Owner)
 			if err != nil {
 				log.Error(err, "patching cluster status")
-				return ctrl.Result{}, err
+				return result, err
 			}
 			log.V(1).Info("patched cluster status")
 		}
-		return ctrl.Result{}, nil
+		return result, nil
 	}()
 
 	// handle paused
@@ -107,29 +106,98 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			Message:            "No spec changes will be applied and no other statuses will be updated.",
 			ObservedGeneration: cluster.GetGeneration(),
 		})
-		return ctrl.Result{}, nil
+		return result, nil
 	} else {
 		meta.RemoveStatusCondition(&cluster.Status.Conditions, opengeminiv1.ClusterProgressing)
 	}
 
+	if err := r.reconcileClusterStatus(ctx, cluster); err != nil {
+		return result, fmt.Errorf("reconcile Cluster status failed: %w", err)
+	}
+
 	// reconciler resource
 	if err := r.reconcileClusterConfigMap(ctx, cluster); err != nil {
-		return ctrl.Result{}, fmt.Errorf("cannot create Cluster configmap objects: %w", err)
+		return result, fmt.Errorf("reconcile Cluster configmap objects failed: %w", err)
 	}
 
 	if err := r.reconcileClusterServices(ctx, cluster); err != nil {
-		return ctrl.Result{}, fmt.Errorf("cannot create Cluster service objects: %w", err)
+		return result, fmt.Errorf("reconcile Cluster service objects failed: %w", err)
 	}
 
 	if err := r.reconcileSuperuserSecret(ctx, cluster); err != nil {
-		return ctrl.Result{}, fmt.Errorf("cannot create Superuser secret objects: %w", err)
+		return result, fmt.Errorf("reconcile Superuser secret objects failed: %w", err)
 	}
 
 	if err := r.reconcileClusterInstances(ctx, cluster); err != nil {
-		return ctrl.Result{}, fmt.Errorf("cannot create Cluster instances: %w", err)
+		return result, fmt.Errorf("reconcile Cluster instances failed: %w", err)
 	}
 
-	return ctrl.Result{}, nil
+	cluster.Status.ObservedGeneration = cluster.GetGeneration()
+	log.V(1).Info("reconciled cluster")
+
+	return result, nil
+}
+
+// +kubebuilder:rbac:groups="",resources="pods",verbs={list}
+// +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={list}
+// +kubebuilder:rbac:groups="apps",resources="deployments",verbs={list}
+
+func (r *GeminiClusterReconciler) reconcileClusterStatus(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
+	pods := &corev1.PodList{}
+	dbs := &appsv1.StatefulSetList{}
+	runners := &appsv1.DeploymentList{}
+
+	selector, err := metav1.LabelSelectorAsSelector(naming.ClusterInstances(cluster.Name))
+	if err != nil {
+		return fmt.Errorf("build label selector failed: %w", err)
+	}
+	if err := r.Client.List(ctx, pods,
+		client.InNamespace(cluster.Namespace),
+		client.MatchingLabelsSelector{Selector: selector},
+	); err != nil {
+		return fmt.Errorf("list instance pods failed: %w", err)
+	}
+	if err := r.Client.List(ctx, dbs,
+		client.InNamespace(cluster.Namespace),
+		client.MatchingLabelsSelector{Selector: selector},
+	); err != nil {
+		return fmt.Errorf("list instance statefulsets failed: %w", err)
+	}
+	if err := r.Client.List(ctx, runners,
+		client.InNamespace(cluster.Namespace),
+		client.MatchingLabelsSelector{Selector: selector},
+	); err != nil {
+		return fmt.Errorf("list instance deployments failed: %w", err)
+	}
+
+	// Fill out status sorted by set name.
+	cluster.Status.InstanceSets = cluster.Status.InstanceSets[:0]
+	for _, name := range []string{naming.InstanceMeta, naming.InstanceStore, naming.InstanceSql} {
+		status := opengeminiv1.InstanceSetStatus{Name: name}
+
+		for _, instance := range dbs.Items {
+			if instance.Labels[opengeminiv1.LabelInstanceSet] != name {
+				continue
+			}
+
+			status.Replicas += instance.Status.Replicas
+			status.ReadyReplicas += instance.Status.ReadyReplicas
+			status.UpdatedReplicas += instance.Status.UpdatedReplicas
+		}
+		for _, instance := range runners.Items {
+			if instance.Labels[opengeminiv1.LabelInstanceSet] != name {
+				continue
+			}
+
+			status.Replicas += instance.Status.Replicas
+			status.ReadyReplicas += instance.Status.ReadyReplicas
+			status.UpdatedReplicas += instance.Status.UpdatedReplicas
+		}
+
+		cluster.Status.InstanceSets = append(cluster.Status.InstanceSets, status)
+	}
+
+	return err
 }
 
 // +kubebuilder:rbac:groups="",resources="configmaps",verbs={get,create}

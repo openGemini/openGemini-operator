@@ -575,15 +575,9 @@ spec:
           status:
             description: GeminiClusterStatus defines the observed state of GeminiCluster
             properties:
-              collisionCount:
-                description: collisionCount is the count of hash collisions for the
-                  StatefulSet. The StatefulSet controller uses this field as a collision
-                  avoidance mechanism when it needs to create the name for the newest
-                  ControllerRevision.
-                format: int32
-                type: integer
               conditions:
-                description: Conditions for cluster object
+                description: conditions represent the observations of cluster's current
+                  state.
                 items:
                   description: "Condition contains details for one aspect of the current
                     state of this API Resource. --- This struct is intended for direct
@@ -651,48 +645,44 @@ spec:
                   - type
                   type: object
                 type: array
-              currentReplicas:
-                description: currentReplicas is the number of Pods created by the
-                  StatefulSet controller from the StatefulSet version indicated by
-                  currentRevision.
-                format: int32
-                type: integer
-              currentRevision:
-                description: currentRevision, if not empty, indicates the version
-                  of the StatefulSet used to generate Pods in the sequence [0,currentReplicas).
-                type: string
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
               customStatus:
                 type: string
+              instances:
+                description: Current state of instances.
+                items:
+                  properties:
+                    name:
+                      type: string
+                    readyReplicas:
+                      description: Total number of ready pods.
+                      format: int32
+                      type: integer
+                    replicas:
+                      description: Total number of pods.
+                      format: int32
+                      type: integer
+                    updatedReplicas:
+                      description: Total number of pods that have the desired specification.
+                      format: int32
+                      type: integer
+                  required:
+                  - name
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
               observedGeneration:
-                description: observedGeneration is the most recent generation observed
-                  for this StatefulSet. It corresponds to the StatefulSet's generation,
-                  which is updated on mutation by the API Server.
+                description: observedGeneration represents the .metadata.generation
+                  on which the status was based.
                 format: int64
-                type: integer
-              readyReplicas:
-                description: readyReplicas is the number of Pods created by the StatefulSet
-                  controller that have a Ready Condition.
-                format: int32
-                type: integer
-              replicas:
-                description: replicas is the number of Pods created by the StatefulSet
-                  controller.
-                format: int32
+                minimum: 0
                 type: integer
               statusDetails:
                 type: string
-              updateRevision:
-                description: updateRevision, if not empty, indicates the version of
-                  the StatefulSet used to generate Pods in the sequence [replicas-updatedReplicas,replicas)
-                type: string
-              updatedReplicas:
-                description: updatedReplicas is the number of Pods created by the
-                  StatefulSet controller from the StatefulSet version indicated by
-                  updateRevision.
-                format: int32
-                type: integer
-            required:
-            - replicas
             type: object
         type: object
     served: true
