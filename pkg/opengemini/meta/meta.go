@@ -39,7 +39,11 @@ func InstancePod(
 			Projected: &corev1.ProjectedVolumeSource{
 				DefaultMode: &[]int32{0o600}[0],
 				Sources: []corev1.VolumeProjection{
-					{ConfigMap: specs.ConfigFileConfigmapProjection(naming.ClusterConfigMap(inCluster).Name)},
+					{
+						ConfigMap: specs.ConfigFileConfigmapProjection(
+							naming.ClusterConfigMap(inCluster).Name,
+						),
+					},
 				},
 			},
 		},

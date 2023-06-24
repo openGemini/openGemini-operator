@@ -35,7 +35,11 @@ func (r *Request[T]) Execute(
 ) error {
 	// Get the current status of the object
 	current := proposed.DeepCopyObject().(T)
-	err := r.c.Get(ctx, types.NamespacedName{Namespace: proposed.GetNamespace(), Name: proposed.GetName()}, current)
+	err := r.c.Get(
+		ctx,
+		types.NamespacedName{Namespace: proposed.GetNamespace(), Name: proposed.GetName()},
+		current,
+	)
 	switch {
 	case apierrs.IsNotFound(err) && r.shouldCreate:
 		return r.c.Create(ctx, proposed)

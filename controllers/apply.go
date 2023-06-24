@@ -22,7 +22,12 @@ func (r *GeminiClusterReconciler) apply(ctx context.Context, object client.Objec
 	return err
 }
 
-func (r *GeminiClusterReconciler) patch(ctx context.Context, object client.Object, patch client.Patch, options ...client.PatchOption) error {
+func (r *GeminiClusterReconciler) patch(
+	ctx context.Context,
+	object client.Object,
+	patch client.Patch,
+	options ...client.PatchOption,
+) error {
 	options = append([]client.PatchOption{r.Owner}, options...)
 	return r.Client.Patch(ctx, object, patch, options...)
 }

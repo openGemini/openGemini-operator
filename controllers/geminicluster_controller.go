@@ -63,7 +63,10 @@ type GeminiClusterReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.1/pkg/reconcile
-func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *GeminiClusterReconciler) Reconcile(
+	ctx context.Context,
+	req ctrl.Request,
+) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
 	cluster := &opengeminiv1.GeminiCluster{}
@@ -71,7 +74,13 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		log.Error(err, "unable to fetch GeminiCluster")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	log.Info("Starting Reconcile Cluster object", "name", cluster.Name, "namespace", cluster.Namespace)
+	log.Info(
+		"Starting Reconcile Cluster object",
+		"name",
+		cluster.Name,
+		"namespace",
+		cluster.Namespace,
+	)
 
 	//TODO:Set Defaults
 
@@ -142,7 +151,10 @@ func (r *GeminiClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={list}
 // +kubebuilder:rbac:groups="apps",resources="deployments",verbs={list}
 
-func (r *GeminiClusterReconciler) reconcileClusterStatus(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
+func (r *GeminiClusterReconciler) reconcileClusterStatus(
+	ctx context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+) error {
 	pods := &corev1.PodList{}
 	dbs := &appsv1.StatefulSetList{}
 	runners := &appsv1.DeploymentList{}
@@ -202,7 +214,10 @@ func (r *GeminiClusterReconciler) reconcileClusterStatus(ctx context.Context, cl
 
 // +kubebuilder:rbac:groups="",resources="configmaps",verbs={get,create}
 
-func (r *GeminiClusterReconciler) reconcileClusterConfigMap(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
+func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
+	ctx context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+) error {
 	clusterConfigMap := &corev1.ConfigMap{ObjectMeta: naming.ClusterConfigMap(cluster)}
 	clusterConfigMap.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
 
@@ -219,7 +234,9 @@ func (r *GeminiClusterReconciler) reconcileClusterConfigMap(ctx context.Context,
 		return fmt.Errorf("set controller reference failed: %w", err)
 	}
 
-	if err := resources.CreateIfNotFound(ctx, r.Client, clusterConfigMap); client.IgnoreAlreadyExists(err) != nil {
+	if err := resources.CreateIfNotFound(ctx, r.Client, clusterConfigMap); client.IgnoreAlreadyExists(
+		err,
+	) != nil {
 		return err
 	}
 
@@ -228,14 +245,19 @@ func (r *GeminiClusterReconciler) reconcileClusterConfigMap(ctx context.Context,
 
 // +kubebuilder:rbac:groups="",resources="services",verbs={get,create}
 
-func (r *GeminiClusterReconciler) reconcileClusterServices(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
+func (r *GeminiClusterReconciler) reconcileClusterServices(
+	ctx context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+) error {
 	readWriteService := specs.CreateClusterReadWriteService(cluster)
 	cluster.SetInheritedMetadata(&readWriteService.ObjectMeta)
 	if err := r.setControllerReference(cluster, readWriteService); err != nil {
 		return fmt.Errorf("set controller reference failed: %w", err)
 	}
 
-	if err := resources.CreateIfNotFound(ctx, r.Client, readWriteService); client.IgnoreAlreadyExists(err) != nil {
+	if err := resources.CreateIfNotFound(ctx, r.Client, readWriteService); client.IgnoreAlreadyExists(
+		err,
+	) != nil {
 		return err
 	}
 
@@ -245,7 +267,9 @@ func (r *GeminiClusterReconciler) reconcileClusterServices(ctx context.Context, 
 		return fmt.Errorf("set controller reference failed: %w", err)
 	}
 
-	if err := resources.CreateIfNotFound(ctx, r.Client, MaintainService); client.IgnoreAlreadyExists(err) != nil {
+	if err := resources.CreateIfNotFound(ctx, r.Client, MaintainService); client.IgnoreAlreadyExists(
+		err,
+	) != nil {
 		return err
 	}
 
@@ -256,7 +280,9 @@ func (r *GeminiClusterReconciler) reconcileClusterServices(ctx context.Context, 
 			return fmt.Errorf("set controller reference failed: %w", err)
 		}
 
-		if err := resources.CreateIfNotFound(ctx, r.Client, svc); client.IgnoreAlreadyExists(err) != nil {
+		if err := resources.CreateIfNotFound(ctx, r.Client, svc); client.IgnoreAlreadyExists(
+			err,
+		) != nil {
 			return err
 		}
 	}
@@ -266,7 +292,10 @@ func (r *GeminiClusterReconciler) reconcileClusterServices(ctx context.Context, 
 
 // +kubebuilder:rbac:groups="",resources="services",verbs={get,create,delete}
 
-func (r *GeminiClusterReconciler) reconcileSuperuserSecret(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
+func (r *GeminiClusterReconciler) reconcileSuperuserSecret(
+	ctx context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+) error {
 	if cluster.GetEnableSuperuserAccess() && cluster.Spec.SuperuserSecretName == "" {
 		superuserPassword, err := password.Generate(64, 10, 0, false, true)
 		if err != nil {
@@ -283,7 +312,9 @@ func (r *GeminiClusterReconciler) reconcileSuperuserSecret(ctx context.Context, 
 			return fmt.Errorf("set controller reference failed: %w", err)
 		}
 
-		if err := resources.CreateIfNotFound(ctx, r.Client, superuserSecret); client.IgnoreAlreadyExists(err) != nil {
+		if err := resources.CreateIfNotFound(ctx, r.Client, superuserSecret); client.IgnoreAlreadyExists(
+			err,
+		) != nil {
 			return err
 		}
 	}
@@ -309,7 +340,10 @@ func (r *GeminiClusterReconciler) reconcileSuperuserSecret(ctx context.Context, 
 	return nil
 }
 
-func (r *GeminiClusterReconciler) reconcileClusterInstances(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
+func (r *GeminiClusterReconciler) reconcileClusterInstances(
+	ctx context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+) error {
 
 	for i := 0; i < int(*cluster.Spec.Meta.Replicas); i++ {
 		if err := r.reconcileMetaInstance(ctx, cluster, i); err != nil {

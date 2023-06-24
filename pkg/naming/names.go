@@ -48,7 +48,11 @@ func GenerateMetaInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1
 }
 
 func GenerateMetaHeadlessSvc(cluster *opengeminiv1.GeminiCluster, index int) string {
-	return fmt.Sprintf("%s.%s.svc.cluster.local", GenerateMetaInstance(cluster, index).Name, cluster.Namespace)
+	return fmt.Sprintf(
+		"%s.%s.svc.cluster.local",
+		GenerateMetaInstance(cluster, index).Name,
+		cluster.Namespace,
+	)
 }
 
 func GenerateStoreInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1.ObjectMeta {
@@ -65,7 +69,10 @@ func GenerateSqlInstance(cluster *opengeminiv1.GeminiCluster) metav1.ObjectMeta 
 	}
 }
 
-func GeneratePVC(cluster *opengeminiv1.GeminiCluster, instance *appsv1.StatefulSet) metav1.ObjectMeta {
+func GeneratePVC(
+	cluster *opengeminiv1.GeminiCluster,
+	instance *appsv1.StatefulSet,
+) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
 		Name:      DataVolume,

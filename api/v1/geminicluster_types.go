@@ -107,6 +107,7 @@ type MonitoringSpec struct {
 }
 
 type AffinitySpec struct {
+	// +kubebuilder:default:=false
 	EnablePodAntiAffinity bool `json:"enablePodAntiAffinity"`
 }
 

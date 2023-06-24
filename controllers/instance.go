@@ -17,7 +17,11 @@ import (
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={get,create,patch}
 // +kubebuilder:rbac:groups="",resources="persistentvolumeclaims",verbs={get,create,patch}
 
-func (r *GeminiClusterReconciler) reconcileMetaInstance(ctx context.Context, cluster *opengeminiv1.GeminiCluster, index int) error {
+func (r *GeminiClusterReconciler) reconcileMetaInstance(
+	ctx context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+	index int,
+) error {
 	instance := &appsv1.StatefulSet{}
 	instance.SetGroupVersionKind(appsv1.SchemeGroupVersion.WithKind("StatefulSet"))
 	instance.ObjectMeta = naming.GenerateMetaInstance(cluster, index)
@@ -48,7 +52,11 @@ func (r *GeminiClusterReconciler) reconcileMetaInstance(ctx context.Context, clu
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={get,create,patch}
 // +kubebuilder:rbac:groups="",resources="persistentvolumeclaims",verbs={get,create,patch}
 
-func (r *GeminiClusterReconciler) reconcileStoreInstance(ctx context.Context, cluster *opengeminiv1.GeminiCluster, index int) error {
+func (r *GeminiClusterReconciler) reconcileStoreInstance(
+	ctx context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+	index int,
+) error {
 	instance := &appsv1.StatefulSet{}
 	instance.SetGroupVersionKind(appsv1.SchemeGroupVersion.WithKind("StatefulSet"))
 	instance.ObjectMeta = naming.GenerateStoreInstance(cluster, index)
@@ -76,7 +84,10 @@ func (r *GeminiClusterReconciler) reconcileStoreInstance(ctx context.Context, cl
 
 // +kubebuilder:rbac:groups="apps",resources="deployments",verbs={get,create,patch}
 
-func (r *GeminiClusterReconciler) reconcileSqlInstance(ctx context.Context, cluster *opengeminiv1.GeminiCluster) error {
+func (r *GeminiClusterReconciler) reconcileSqlInstance(
+	ctx context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+) error {
 	instance := &appsv1.Deployment{}
 	instance.SetGroupVersionKind(appsv1.SchemeGroupVersion.WithKind("Deployment"))
 	instance.ObjectMeta = naming.GenerateSqlInstance(cluster)
@@ -93,7 +104,12 @@ func (r *GeminiClusterReconciler) reconcileSqlInstance(ctx context.Context, clus
 	return nil
 }
 
-func generateInstanceStatefulSetIntent(_ context.Context, cluster *opengeminiv1.GeminiCluster, setName string, sts *appsv1.StatefulSet) {
+func generateInstanceStatefulSetIntent(
+	_ context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+	setName string,
+	sts *appsv1.StatefulSet,
+) {
 	sts.Annotations = utils.MergeLabels(
 		cluster.Spec.Metadata.GetAnnotationsOrNil())
 	sts.Labels = utils.MergeLabels(
@@ -128,7 +144,12 @@ func generateInstanceStatefulSetIntent(_ context.Context, cluster *opengeminiv1.
 	sts.Spec.Replicas = &[]int32{1}[0]
 }
 
-func generateInstanceDeploymentIntent(_ context.Context, cluster *opengeminiv1.GeminiCluster, setName string, deploy *appsv1.Deployment) {
+func generateInstanceDeploymentIntent(
+	_ context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+	setName string,
+	deploy *appsv1.Deployment,
+) {
 	deploy.Annotations = utils.MergeLabels(
 		cluster.Spec.Metadata.GetAnnotationsOrNil())
 	deploy.Labels = utils.MergeLabels(
