@@ -1,0 +1,47 @@
+apiVersion: opengemini-operator.opengemini.org/v1
+kind: GeminiCluster
+metadata:
+  name: test-cluster
+  namespace: opengemini
+spec:
+  affinity:
+    enablePodAntiAffinity: false
+  enableSuperuserAccess: false
+  monitoring:
+    type: string
+  paused: false
+  meta:
+    dataVolumeClaimSpec:
+      accessModes:
+        - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: 1Gi
+    image: opengeminidb/opengemini-k8s:v1.0.1
+    replicas: 3
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 512Mi
+  sql:
+    image: opengeminidb/opengemini-k8s:v1.0.1
+    port: "8086"
+    replicas: 2
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 512Mi
+  store:
+    dataVolumeClaimSpec:
+      accessModes:
+        - "ReadWriteOnce"
+      resources:
+        requests:
+          storage: 1Gi
+    image: opengeminidb/opengemini-k8s:v1.0.1
+    replicas: 3
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 512Mi
+  version: v1
