@@ -1,0 +1,16 @@
+domain: opengemini.org
+layout:
+- go.kubebuilder.io/v3
+projectName: opengemini-operator
+repo: github.com/openGemini/openGemini-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: opengemini.org
+  group: opengemini-operator
+  kind: GeminiCluster
+  path: github.com/openGemini/openGemini-operator/api/v1
+  version: v1
+version: "3"
