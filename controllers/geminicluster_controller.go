@@ -66,7 +66,7 @@ type GeminiClusterReconciler struct {
 func (r *GeminiClusterReconciler) Reconcile(
 	ctx context.Context,
 	req ctrl.Request,
-) (ctrl.Result, error) {
+) (result ctrl.Result, err error) {
 	log := log.FromContext(ctx)
 
 	cluster := &opengeminiv1.GeminiCluster{}
@@ -93,17 +93,18 @@ func (r *GeminiClusterReconciler) Reconcile(
 		return ctrl.Result{}, nil
 	}
 
-	result := ctrl.Result{}
-	defer func() (ctrl.Result, error) {
+	defer func() {
 		if !equality.Semantic.DeepEqual(before.Status, cluster.Status) {
-			err := r.Client.Status().Patch(ctx, cluster, client.MergeFrom(before), r.Owner)
-			if err != nil {
-				log.Error(err, "patching cluster status")
-				return result, err
+			patchErr := r.Client.Status().Patch(ctx, cluster, client.MergeFrom(before), r.Owner)
+			if patchErr != nil {
+				log.Error(patchErr, "patching cluster status")
+				if err == nil {
+					err = patchErr
+				}
+				return
 			}
 			log.V(1).Info("patched cluster status")
 		}
-		return result, nil
 	}()
 
 	// handle paused
@@ -367,11 +368,11 @@ func (r *GeminiClusterReconciler) setControllerReference(
 	return controllerutil.SetControllerReference(owner, controlled, r.Client.Scheme())
 }
 
-func (r *GeminiClusterReconciler) setOwnerReference(
-	owner *opengeminiv1.GeminiCluster, controlled client.Object,
-) error {
-	return controllerutil.SetOwnerReference(owner, controlled, r.Client.Scheme())
-}
+// func (r *GeminiClusterReconciler) setOwnerReference(
+// 	owner *opengeminiv1.GeminiCluster, controlled client.Object,
+// ) error {
+// 	return controllerutil.SetOwnerReference(owner, controlled, r.Client.Scheme())
+// }
 
 func IsOwnedByCluster(obj client.Object) (string, bool) {
 	owner := metav1.GetControllerOf(obj)

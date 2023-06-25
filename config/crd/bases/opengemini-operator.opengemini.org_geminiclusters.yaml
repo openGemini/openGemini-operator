@@ -40,6 +40,7 @@ spec:
               affinity:
                 properties:
                   enablePodAntiAffinity:
+                    default: false
                     type: boolean
                 required:
                 - enablePodAntiAffinity
