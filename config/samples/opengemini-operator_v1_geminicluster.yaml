@@ -21,7 +21,7 @@ spec:
     replicas: 3
     resources:
       requests:
-        cpu: 1000m
+        cpu: 100m
         memory: 512Mi
   sql:
     image: opengeminidb/opengemini-k8s:v1.0.1
@@ -29,7 +29,7 @@ spec:
     replicas: 2
     resources:
       requests:
-        cpu: 1000m
+        cpu: 100m
         memory: 512Mi
   store:
     dataVolumeClaimSpec:
@@ -42,6 +42,6 @@ spec:
     replicas: 3
     resources:
       requests:
-        cpu: 1000m
+        cpu: 100m
         memory: 512Mi
   version: v1
