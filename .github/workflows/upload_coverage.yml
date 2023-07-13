@@ -3,8 +3,6 @@ name: UT and Upload Coverage
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
     paths-ignore:
       - '**.md'
       - '.gitignore'

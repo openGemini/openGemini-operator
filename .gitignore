@@ -16,4 +16,7 @@
 bin/
 .cluster.yaml
 
+# IDE
 .vscode
+.idea
+.fleet
