@@ -12,7 +12,7 @@ controllerManager:
         memory: 64Mi
   manager:
     image:
-      repository: registry.woqutech.com/xiewei/opengemini-operator
+      repository: ghcr.io/opengemini/opengemini-operator:latest
       tag: 814de3b
     resources:
       limits:

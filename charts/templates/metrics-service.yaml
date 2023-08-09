@@ -9,9 +9,12 @@ metadata:
     control-plane: controller-manager
   {{- include "chart.labels" . | nindent 4 }}
 spec:
-  type: {{ .Values.metricsService.type }}
+  type: ClusterIP
   selector:
     control-plane: controller-manager
   {{- include "chart.selectorLabels" . | nindent 4 }}
   ports:
-	{{- .Values.metricsService.ports | toYaml | nindent 2 -}}
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: https
