@@ -45,9 +45,9 @@ type GeminiClusterSpec struct {
 	Affinity   AffinitySpec   `json:"affinity"`
 
 	// +optional
-	SuperuserSecretName string `json:"superuserSecret,omitempty"`
+	CustomAdminSecretName string `json:"customAdminSecretName,omitempty"`
 	// +kubebuilder:default:=false
-	EnableSuperuserAccess *bool `json:"enableSuperuserAccess,omitempty"`
+	EnableHttpAuth *bool `json:"enableHttpAuth,omitempty"`
 }
 
 type SQLSpec struct {
@@ -175,6 +175,12 @@ type GeminiClusterStatus struct {
 	// +listMapKey=type
 	// +operator-sdk:csv:customresourcedefinitions:type=status,xDescriptors={"urn:alm:descriptor:io.kubernetes.conditions"}
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// if admin user has initialized
+	// +kubebuilder:default:=false
+	AdminUserInitialized bool `json:"adminUserInitialized"`
+	// md5 hash of applied config file content
+	AppliedConfigHash string `json:"appliedConfigHash"`
 }
 
 //+kubebuilder:object:root=true
@@ -198,20 +204,16 @@ func (cluster *GeminiCluster) GetServiceReadWriteName() string {
 	return fmt.Sprintf("%v%v", cluster.Name, ServiceReadWriteSuffix)
 }
 
-func (cluster *GeminiCluster) GetEnableSuperuserAccess() bool {
-	if cluster.Spec.EnableSuperuserAccess != nil {
-		return *cluster.Spec.EnableSuperuserAccess
+func (cluster *GeminiCluster) GetEnableHttpAuth() bool {
+	if cluster.Spec.EnableHttpAuth != nil {
+		return *cluster.Spec.EnableHttpAuth
 	}
 
-	return true
+	return false
 }
 
-func (cluster *GeminiCluster) GetSuperuserSecretName() string {
-	if cluster.Spec.SuperuserSecretName != "" {
-		return cluster.Spec.SuperuserSecretName
-	}
-
-	return fmt.Sprintf("%v%v", cluster.Name, SuperUserSecretSuffix)
+func (cluster *GeminiCluster) GetAdminUserSecretName() string {
+	return fmt.Sprintf("%v%v", cluster.Name, AdminUserSecretSuffix)
 }
 
 func (cluster *GeminiCluster) SetInheritedMetadata(obj *metav1.ObjectMeta) {
@@ -220,6 +222,17 @@ func (cluster *GeminiCluster) SetInheritedMetadata(obj *metav1.ObjectMeta) {
 		map[string]string{
 			LabelCluster: cluster.Name,
 		})
+}
+
+func (cluster *GeminiCluster) IsSqlReady() bool {
+	for _, status := range cluster.Status.InstanceSets {
+		if status.Name == "sql" {
+			if status.Replicas != 0 && status.ReadyReplicas == status.Replicas {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 //+kubebuilder:object:root=true

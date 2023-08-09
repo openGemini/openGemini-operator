@@ -4,5 +4,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: registry.woqutech.com/xiewei/opengemini-operator
-  newTag: 814de3b
+  newName: ghcr.io/opengemini/opengemini-operator
+  newTag: latest

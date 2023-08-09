@@ -11,5 +11,6 @@ const (
 	LabelInstance    = labelPrefix + "instance"
 	LabelInstanceSet = labelPrefix + "instance-set"
 
-	SuperUserSecretSuffix = "-superuser"
+	AdminUserSecretSuffix = "-admin"
+	DefaultAdminUsername  = "admin"
 )
