@@ -1,0 +1,26 @@
+controllerManager:
+  kubeRbacProxy:
+    image:
+      repository: gcr.io/kubebuilder/kube-rbac-proxy
+      tag: v0.13.1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 128Mi
+      requests:
+        cpu: 5m
+        memory: 64Mi
+  manager:
+    image:
+      repository: ghcr.io/opengemini/opengemini-operator:latest
+      tag: 814de3b
+    resources:
+      limits:
+        cpu: 500m
+        memory: 128Mi
+      requests:
+        cpu: 10m
+        memory: 64Mi
+  replicas: 1
+  serviceAccount:
+    annotations: {}
