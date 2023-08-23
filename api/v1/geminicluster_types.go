@@ -48,6 +48,8 @@ type GeminiClusterSpec struct {
 	CustomAdminSecretName string `json:"customAdminSecretName,omitempty"`
 	// +kubebuilder:default:=false
 	EnableHttpAuth *bool `json:"enableHttpAuth,omitempty"`
+	// +optional
+	CustomConfigMapName string `json:"customConfigMapName,omitempty"`
 }
 
 type SQLSpec struct {

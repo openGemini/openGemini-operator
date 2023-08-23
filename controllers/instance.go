@@ -135,6 +135,7 @@ func generateInstanceStatefulSetIntent(
 			opengeminiv1.LabelCluster:     cluster.Name,
 			opengeminiv1.LabelInstanceSet: setName,
 			opengeminiv1.LabelInstance:    sts.Name,
+			opengeminiv1.LabelConfigHash:  cluster.Status.AppliedConfigHash,
 		})
 	sts.Spec.Template.Spec.RestartPolicy = corev1.RestartPolicyAlways
 	sts.Spec.Template.Spec.ShareProcessNamespace = &[]bool{true}[0]
@@ -175,6 +176,7 @@ func generateInstanceDeploymentIntent(
 			opengeminiv1.LabelCluster:     cluster.Name,
 			opengeminiv1.LabelInstanceSet: setName,
 			opengeminiv1.LabelInstance:    deploy.Name,
+			opengeminiv1.LabelConfigHash:  cluster.Status.AppliedConfigHash,
 		})
 	deploy.Spec.Template.Spec.RestartPolicy = corev1.RestartPolicyAlways
 	deploy.Spec.Template.Spec.ShareProcessNamespace = &[]bool{true}[0]
