@@ -6,7 +6,7 @@ metadata:
 spec:
   affinity:
     enablePodAntiAffinity: false
-  enableSuperuserAccess: false
+  enableHttpAuth: false
   monitoring:
     type: string
   paused: false

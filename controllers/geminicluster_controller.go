@@ -19,17 +19,19 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	_ "github.com/influxdata/influxdb1-client"
+	influxClient "github.com/influxdata/influxdb1-client/v2"
 	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	"github.com/openGemini/openGemini-operator/pkg/configfile"
 	"github.com/openGemini/openGemini-operator/pkg/naming"
 	"github.com/openGemini/openGemini-operator/pkg/resources"
 	"github.com/openGemini/openGemini-operator/pkg/specs"
-	"github.com/sethvargo/go-password/password"
+	"github.com/openGemini/openGemini-operator/pkg/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -70,7 +72,7 @@ func (r *GeminiClusterReconciler) Reconcile(
 	log := log.FromContext(ctx)
 
 	cluster := &opengeminiv1.GeminiCluster{}
-	if err := r.Get(ctx, req.NamespacedName, cluster); err != nil {
+	if err = r.Get(ctx, req.NamespacedName, cluster); err != nil {
 		log.Error(err, "unable to fetch GeminiCluster")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -134,12 +136,15 @@ func (r *GeminiClusterReconciler) Reconcile(
 		return result, fmt.Errorf("reconcile Cluster service objects failed: %w", err)
 	}
 
-	if err := r.reconcileSuperuserSecret(ctx, cluster); err != nil {
-		return result, fmt.Errorf("reconcile Superuser secret objects failed: %w", err)
-	}
-
 	if err := r.reconcileClusterInstances(ctx, cluster); err != nil {
 		return result, fmt.Errorf("reconcile Cluster instances failed: %w", err)
+	}
+
+	if err := r.reconcileAdminUserSecret(ctx, cluster); err != nil {
+		return result, fmt.Errorf("reconcile admin secret objects failed: %w", err)
+	}
+	if err := r.reconcileAdminAccount(ctx, cluster); err != nil {
+		return result, fmt.Errorf("reconcile admin account failed: %w", err)
 	}
 
 	cluster.Status.ObservedGeneration = cluster.GetGeneration()
@@ -148,7 +153,6 @@ func (r *GeminiClusterReconciler) Reconcile(
 	return result, nil
 }
 
-// +kubebuilder:rbac:groups="",resources="pods",verbs={list}
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={list}
 // +kubebuilder:rbac:groups="apps",resources="deployments",verbs={list}
 
@@ -156,7 +160,6 @@ func (r *GeminiClusterReconciler) reconcileClusterStatus(
 	ctx context.Context,
 	cluster *opengeminiv1.GeminiCluster,
 ) error {
-	pods := &corev1.PodList{}
 	dbs := &appsv1.StatefulSetList{}
 	runners := &appsv1.DeploymentList{}
 
@@ -164,19 +167,13 @@ func (r *GeminiClusterReconciler) reconcileClusterStatus(
 	if err != nil {
 		return fmt.Errorf("build label selector failed: %w", err)
 	}
-	if err := r.Client.List(ctx, pods,
-		client.InNamespace(cluster.Namespace),
-		client.MatchingLabelsSelector{Selector: selector},
-	); err != nil {
-		return fmt.Errorf("list instance pods failed: %w", err)
-	}
-	if err := r.Client.List(ctx, dbs,
+	if err = r.List(ctx, dbs,
 		client.InNamespace(cluster.Namespace),
 		client.MatchingLabelsSelector{Selector: selector},
 	); err != nil {
 		return fmt.Errorf("list instance statefulsets failed: %w", err)
 	}
-	if err := r.Client.List(ctx, runners,
+	if err = r.List(ctx, runners,
 		client.InNamespace(cluster.Namespace),
 		client.MatchingLabelsSelector{Selector: selector},
 	); err != nil {
@@ -213,7 +210,7 @@ func (r *GeminiClusterReconciler) reconcileClusterStatus(
 	return err
 }
 
-// +kubebuilder:rbac:groups="",resources="configmaps",verbs={get,create}
+// +kubebuilder:rbac:groups="",resources="configmaps",verbs={get,create,patch}
 
 func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
 	ctx context.Context,
@@ -229,17 +226,17 @@ func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
 	clusterConfigMap.Data = map[string]string{
 		naming.ConfigurationFile: conf,
 	}
+	confHash := utils.CalcMd5Hash(conf)
 
 	cluster.SetInheritedMetadata(&clusterConfigMap.ObjectMeta)
 	if err := r.setControllerReference(cluster, clusterConfigMap); err != nil {
 		return fmt.Errorf("set controller reference failed: %w", err)
 	}
 
-	if err := resources.CreateIfNotFound(ctx, r.Client, clusterConfigMap); client.IgnoreAlreadyExists(
-		err,
-	) != nil {
+	if err := r.apply(ctx, clusterConfigMap); err != nil {
 		return err
 	}
+	cluster.Status.AppliedConfigHash = confHash
 
 	return nil
 }
@@ -291,51 +288,113 @@ func (r *GeminiClusterReconciler) reconcileClusterServices(
 	return nil
 }
 
-// +kubebuilder:rbac:groups="",resources="services",verbs={get,create,delete}
+// +kubebuilder:rbac:groups="",resources="secrets",verbs={get,create,delete}
 
-func (r *GeminiClusterReconciler) reconcileSuperuserSecret(
+func (r *GeminiClusterReconciler) reconcileAdminUserSecret(
 	ctx context.Context,
 	cluster *opengeminiv1.GeminiCluster,
-) error {
-	if cluster.GetEnableSuperuserAccess() && cluster.Spec.SuperuserSecretName == "" {
-		superuserPassword, err := password.Generate(64, 10, 0, false, true)
-		if err != nil {
-			return err
+) (err error) {
+	log := log.FromContext(ctx)
+	if cluster.Status.AdminUserInitialized {
+		log.Info("admin has been initialized, will skip reconcile secret")
+		return nil
+	}
+
+	if cluster.GetEnableHttpAuth() {
+		var (
+			adminUsername string
+			adminPassword string
+		)
+
+		if cluster.Spec.CustomAdminSecretName != "" {
+			var customAdminSecret corev1.Secret
+			err = r.Get(
+				ctx,
+				client.ObjectKey{Namespace: cluster.Namespace, Name: cluster.Spec.CustomAdminSecretName},
+				&customAdminSecret)
+			if err != nil {
+				return fmt.Errorf("get custom admin secret failed: %w", err)
+			}
+			adminUsername = string(customAdminSecret.Data["username"])
+			adminPassword = string(customAdminSecret.Data["password"])
+			if adminUsername == "" || adminPassword == "" {
+				return fmt.Errorf("custom admin secret is not valid")
+			}
+		} else {
+			adminUsername = opengeminiv1.DefaultAdminUsername
+			adminPassword = utils.GenPassword(16, 4, 4, 4)
 		}
 
-		superuserSecret := specs.CreateSecret(
-			cluster.GetSuperuserSecretName(),
+		adminUserSecret := specs.CreateSecret(
+			cluster.GetAdminUserSecretName(),
 			cluster.Namespace,
-			"root",
-			superuserPassword)
-		cluster.SetInheritedMetadata(&superuserSecret.ObjectMeta)
-		if err := r.setControllerReference(cluster, superuserSecret); err != nil {
+			adminUsername,
+			adminPassword)
+		cluster.SetInheritedMetadata(&adminUserSecret.ObjectMeta)
+		if err := r.setControllerReference(cluster, adminUserSecret); err != nil {
 			return fmt.Errorf("set controller reference failed: %w", err)
 		}
 
-		if err := resources.CreateIfNotFound(ctx, r.Client, superuserSecret); client.IgnoreAlreadyExists(
-			err,
-		) != nil {
+		if err := resources.CreateIfNotFound(ctx, r.Client, adminUserSecret); client.IgnoreAlreadyExists(err) != nil {
 			return err
 		}
 	}
 
-	if !cluster.GetEnableSuperuserAccess() {
-		var secret corev1.Secret
-		err := r.Get(
+	return nil
+}
+
+func (r *GeminiClusterReconciler) reconcileAdminAccount(
+	ctx context.Context,
+	cluster *opengeminiv1.GeminiCluster,
+) (err error) {
+	log := log.FromContext(ctx)
+	if cluster.Status.AdminUserInitialized {
+		log.Info("admin has been initialized, will skip reconcile account")
+		return nil
+	}
+
+	if cluster.GetEnableHttpAuth() && cluster.IsSqlReady() {
+		var (
+			adminUsername string
+			adminPassword string
+		)
+
+		var adminUserSecret corev1.Secret
+		err = r.Get(
 			ctx,
-			client.ObjectKey{Namespace: cluster.Namespace, Name: cluster.GetSuperuserSecretName()},
-			&secret)
+			client.ObjectKey{Namespace: cluster.Namespace, Name: cluster.GetAdminUserSecretName()},
+			&adminUserSecret)
 		if err != nil {
-			if apierrs.IsNotFound(err) || apierrs.IsForbidden(err) {
-				return nil
-			}
-			return err
+			return fmt.Errorf("get admin user secret failed: %w", err)
+		}
+		adminUsername = string(adminUserSecret.Data["username"])
+		adminPassword = string(adminUserSecret.Data["password"])
+		if adminUsername == "" || adminPassword == "" {
+			return fmt.Errorf("admin user secret data is not valid")
 		}
 
-		if _, owned := IsOwnedByCluster(&secret); owned {
-			return r.Delete(ctx, &secret)
+		sqlHost := fmt.Sprintf("%s.%s", cluster.GetServiceReadWriteName(), cluster.Namespace)
+		cli, err := influxClient.NewHTTPClient(influxClient.HTTPConfig{
+			Addr:     fmt.Sprintf("http://%s:8086", sqlHost),
+			Username: adminUsername,
+			Password: adminPassword,
+		})
+		if err != nil {
+			return fmt.Errorf("create opengemini client failed, err: %s", err.Error())
 		}
+		defer cli.Close()
+
+		adminQuery := fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s' WITH ALL PRIVILEGES", adminUsername, adminPassword)
+		response, err := cli.Query(influxClient.NewQuery(adminQuery, "", ""))
+		if err != nil {
+			return err
+		}
+		if response.Error() != nil {
+			if !strings.Contains(response.Error().Error(), "already exists") && !strings.Contains(response.Error().Error(), "is existed") {
+				return response.Error()
+			}
+		}
+		cluster.Status.AdminUserInitialized = true
 	}
 
 	return nil

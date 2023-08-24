@@ -45,7 +45,9 @@ spec:
                 required:
                 - enablePodAntiAffinity
                 type: object
-              enableSuperuserAccess:
+              customAdminSecretName:
+                type: string
+              enableHttpAuth:
                 default: false
                 type: boolean
               meta:
@@ -561,8 +563,6 @@ spec:
                 - dataVolumeClaimSpec
                 - image
                 type: object
-              superuserSecret:
-                type: string
               version:
                 type: string
             required:
@@ -576,6 +576,13 @@ spec:
           status:
             description: GeminiClusterStatus defines the observed state of GeminiCluster
             properties:
+              adminUserInitialized:
+                default: false
+                description: if admin user has initialized
+                type: boolean
+              appliedConfigHash:
+                description: md5 hash of applied config file content
+                type: string
               conditions:
                 description: conditions represent the observations of cluster's current
                   state.
@@ -684,6 +691,9 @@ spec:
                 type: integer
               statusDetails:
                 type: string
+            required:
+            - adminUserInitialized
+            - appliedConfigHash
             type: object
         type: object
     served: true

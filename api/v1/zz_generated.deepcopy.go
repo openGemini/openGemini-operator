@@ -118,8 +118,8 @@ func (in *GeminiClusterSpec) DeepCopyInto(out *GeminiClusterSpec) {
 	in.Store.DeepCopyInto(&out.Store)
 	out.Monitoring = in.Monitoring
 	out.Affinity = in.Affinity
-	if in.EnableSuperuserAccess != nil {
-		in, out := &in.EnableSuperuserAccess, &out.EnableSuperuserAccess
+	if in.EnableHttpAuth != nil {
+		in, out := &in.EnableHttpAuth, &out.EnableHttpAuth
 		*out = new(bool)
 		**out = **in
 	}

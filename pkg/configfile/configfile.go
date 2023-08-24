@@ -24,6 +24,7 @@ type CommonConfig struct {
 
 type HttpConfig struct {
 	BindAddress string `toml:"bind-address"`
+	AuthEnabled bool   `toml:"auth-enabled"`
 }
 
 type MetaConfig struct {
@@ -68,6 +69,7 @@ func NewConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
 		},
 		Http: HttpConfig{
 			BindAddress: "<HOST_IP>:8086",
+			AuthEnabled: cluster.GetEnableHttpAuth(),
 		},
 		Meta: MetaConfig{
 			BindAddress:     "<HOST_IP>:8088",
