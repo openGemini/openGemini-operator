@@ -10,6 +10,7 @@ const (
 	LabelCluster     = labelPrefix + "cluster"
 	LabelInstance    = labelPrefix + "instance"
 	LabelInstanceSet = labelPrefix + "instance-set"
+	LabelConfigHash  = labelPrefix + "config-hash"
 
 	AdminUserSecretSuffix = "-admin"
 	DefaultAdminUsername  = "admin"

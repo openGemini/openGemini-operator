@@ -216,17 +216,41 @@ func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
 	ctx context.Context,
 	cluster *opengeminiv1.GeminiCluster,
 ) error {
-	clusterConfigMap := &corev1.ConfigMap{ObjectMeta: naming.ClusterConfigMap(cluster)}
-	clusterConfigMap.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
-
-	conf, err := configfile.NewConfiguration(cluster)
+	confData, err := configfile.NewBaseConfiguration(cluster)
 	if err != nil {
 		return fmt.Errorf("cannot generate cluster configruation: %w", err)
 	}
-	clusterConfigMap.Data = map[string]string{
-		naming.ConfigurationFile: conf,
+
+	if cluster.Spec.CustomConfigMapName != "" {
+		var customCM corev1.ConfigMap
+		err := r.Get(
+			ctx,
+			client.ObjectKey{Namespace: cluster.Namespace, Name: cluster.Spec.CustomConfigMapName},
+			&customCM)
+		if err != nil {
+			return fmt.Errorf("fetch custom conf ConfigMap failed, err: %w", err)
+		}
+
+		confFiles := make([]string, 0)
+		for _, v := range customCM.Data {
+			if v != "" {
+				confFiles = append(confFiles, v)
+			}
+		}
+		confFiles = append(confFiles, confData)
+
+		confData, err = configfile.Merge(confFiles...)
+		if err != nil {
+			return fmt.Errorf("merge custom conf failed, err: %w", err)
+		}
 	}
-	confHash := utils.CalcMd5Hash(conf)
+
+	clusterConfigMap := &corev1.ConfigMap{ObjectMeta: naming.ClusterConfigMap(cluster)}
+	clusterConfigMap.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
+	clusterConfigMap.Data = map[string]string{
+		naming.ConfigurationFile: confData,
+	}
+	confHash := utils.CalcMd5Hash(confData)
 
 	cluster.SetInheritedMetadata(&clusterConfigMap.ObjectMeta)
 	if err := r.setControllerReference(cluster, clusterConfigMap); err != nil {

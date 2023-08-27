@@ -48,13 +48,14 @@ type LoggingConfig struct {
 }
 
 type GossipConfig struct {
+	Enabled       bool     `toml:"enabled"`
 	BindAddress   string   `toml:"bind-address"`
 	StoreBindPort int      `toml:"store-bind-port"`
 	MetaBindPort  int      `toml:"meta-bind-port"`
 	Members       []string `toml:"members"`
 }
 
-func NewConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
+func NewBaseConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
 	metaJoinAddrs := []string{}
 	metaGossipAddrs := []string{}
 	for i := 0; i < int(*cluster.Spec.Meta.Replicas); i++ {
@@ -89,6 +90,7 @@ func NewConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
 			Path: "/ogdata/logs",
 		},
 		Gossip: GossipConfig{
+			Enabled:       true,
 			BindAddress:   "<HOST_IP>",
 			StoreBindPort: 8011,
 			MetaBindPort:  8010,
@@ -102,4 +104,88 @@ func NewConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
 		return "", fmt.Errorf("encode configuration to string failed. err: %w", err)
 	}
 	return buf.String(), nil
+}
+
+func Merge(data ...string) (string, error) {
+	output := make(map[string]interface{})
+	for _, dt := range data {
+		var tmp map[string]interface{}
+		_, err := toml.Decode(dt, &tmp)
+		if err != nil {
+			return "", fmt.Errorf("error in '%s': %w", dt, err)
+		}
+
+		output = mergeMaps(output, tmp)
+	}
+
+	buf := new(bytes.Buffer)
+	err := toml.NewEncoder(buf).Encode(output)
+	if err != nil {
+		return "", fmt.Errorf("encode configuration to string failed. err: %w", err)
+	}
+	return buf.String(), nil
+}
+
+func mergeMaps(map1, map2 map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	// Merge keys from both maps
+	for key, value1 := range map1 {
+		if value2, ok := map2[key]; ok {
+			// Check if both values are maps
+			if subMap1, isSubMap1 := value1.(map[string]interface{}); isSubMap1 {
+				if subMap2, isSubMap2 := value2.(map[string]interface{}); isSubMap2 {
+					// Recursive merge for sub-maps
+					result[key] = mergeMaps(subMap1, subMap2)
+					continue
+				}
+			}
+
+			// Check if both values are arrays
+			if slice1, isSlice1 := value1.([]interface{}); isSlice1 {
+				if slice2, isSlice2 := value2.([]interface{}); isSlice2 {
+					// Combine arrays, remove duplicates
+					result[key] = mergeArrays(slice1, slice2)
+					continue
+				}
+			}
+
+			// Default: value2 overwrites value1
+			result[key] = value2
+		} else {
+			result[key] = value1
+		}
+	}
+
+	// Add keys that only exist in map2
+	for key, value2 := range map2 {
+		if _, exists := map1[key]; !exists {
+			result[key] = value2
+		}
+	}
+
+	return result
+}
+
+func mergeArrays(slice1, slice2 []interface{}) []interface{} {
+	merged := make([]interface{}, len(slice1)+len(slice2))
+
+	copy(merged, slice1)
+	for _, value := range slice2 {
+		// Add only unique values from slice2
+		if !containsValue(merged, value) {
+			merged = append(merged, value)
+		}
+	}
+
+	return merged
+}
+
+func containsValue(slice []interface{}, value interface{}) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }

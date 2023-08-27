@@ -47,6 +47,8 @@ spec:
                 type: object
               customAdminSecretName:
                 type: string
+              customConfigMapName:
+                type: string
               enableHttpAuth:
                 default: false
                 type: boolean
