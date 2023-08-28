@@ -32,12 +32,12 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -45,11 +45,17 @@ const (
 	ControllerManagerName = "openminicluster-controller"
 )
 
+type K8sController interface {
+	SetControllerReference(owner, controlled metav1.Object, scheme *runtime.Scheme) error
+}
+
 // GeminiClusterReconciler reconciles a GeminiCluster object
 type GeminiClusterReconciler struct {
 	client.Client
 	Owner  client.FieldOwner
 	Scheme *runtime.Scheme
+
+	Controller K8sController
 }
 
 //+kubebuilder:rbac:groups=opengemini-operator.opengemini.org,resources=geminiclusters,verbs=get;list;watch;create;update;patch;delete
@@ -216,41 +222,25 @@ func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
 	ctx context.Context,
 	cluster *opengeminiv1.GeminiCluster,
 ) error {
-	confData, err := configfile.NewBaseConfiguration(cluster)
+	confdata, err := configfile.NewBaseConfiguration(cluster)
 	if err != nil {
 		return fmt.Errorf("cannot generate cluster configruation: %w", err)
 	}
 
-	if cluster.Spec.CustomConfigMapName != "" {
-		var customCM corev1.ConfigMap
-		err := r.Get(
-			ctx,
-			client.ObjectKey{Namespace: cluster.Namespace, Name: cluster.Spec.CustomConfigMapName},
-			&customCM)
-		if err != nil {
-			return fmt.Errorf("fetch custom conf ConfigMap failed, err: %w", err)
-		}
-
-		confFiles := make([]string, 0)
-		for _, v := range customCM.Data {
-			if v != "" {
-				confFiles = append(confFiles, v)
-			}
-		}
-		confFiles = append(confFiles, confData)
-
-		confData, err = configfile.Merge(confFiles...)
-		if err != nil {
-			return fmt.Errorf("merge custom conf failed, err: %w", err)
-		}
+	updatedConfig, err := r.getUpdatedConfig(ctx, cluster, confdata)
+	if err != nil {
+		return err
+	}
+	if updatedConfig != "" {
+		confdata = updatedConfig
 	}
 
 	clusterConfigMap := &corev1.ConfigMap{ObjectMeta: naming.ClusterConfigMap(cluster)}
 	clusterConfigMap.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
 	clusterConfigMap.Data = map[string]string{
-		naming.ConfigurationFile: confData,
+		naming.ConfigurationFile: confdata,
 	}
-	confHash := utils.CalcMd5Hash(confData)
+	confHash := utils.CalcMd5Hash(confdata)
 
 	cluster.SetInheritedMetadata(&clusterConfigMap.ObjectMeta)
 	if err := r.setControllerReference(cluster, clusterConfigMap); err != nil {
@@ -263,6 +253,29 @@ func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
 	cluster.Status.AppliedConfigHash = confHash
 
 	return nil
+}
+
+// getUpdatedConfig returns the updated config items if set config map
+func (r *GeminiClusterReconciler) getUpdatedConfig(ctx context.Context, cluster *opengeminiv1.GeminiCluster, tmplConf string) (string, error) {
+	var customCM corev1.ConfigMap
+	err := r.Get(
+		ctx,
+		client.ObjectKey{Namespace: cluster.Namespace, Name: cluster.Spec.CustomConfigMapName},
+		&customCM)
+	if errors.IsNotFound(err) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("fetch custom conf ConfigMap failed, err: %w", err)
+	}
+
+	var newConfigData string
+	var ok bool
+	if newConfigData, ok = customCM.Data[naming.ConfigurationFile]; !ok {
+		return "", nil
+	}
+
+	return configfile.UpdateConfig(tmplConf, newConfigData)
 }
 
 // +kubebuilder:rbac:groups="",resources="services",verbs={get,create}
@@ -448,7 +461,8 @@ func (r *GeminiClusterReconciler) reconcileClusterInstances(
 func (r *GeminiClusterReconciler) setControllerReference(
 	owner *opengeminiv1.GeminiCluster, controlled client.Object,
 ) error {
-	return controllerutil.SetControllerReference(owner, controlled, r.Client.Scheme())
+	return r.Controller.SetControllerReference(owner, controlled, r.Client.Scheme())
+	//return controllerutil.SetControllerReference(owner, controlled, r.Client.Scheme())
 }
 
 // func (r *GeminiClusterReconciler) setOwnerReference(

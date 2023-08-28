@@ -76,18 +76,18 @@ func NewBaseConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
 			BindAddress:     "<HOST_IP>:8088",
 			HttpBindAddress: "<HOST_IP>:8091",
 			RpcBindAddress:  "<HOST_IP>:8092",
-			Dir:             "/ogdata/meta",
+			Dir:             naming.DataMountPath + "/meta",
 			Domain:          "<META_DOMAIN>",
 		},
 		Data: DataConfig{
 			StoreIngestAddr: "<HOST_IP>:8400",
 			StoreSelectAddr: "<HOST_IP>:8401",
-			StoreDataDir:    "/ogdata/data",
-			StoreWalDir:     "/ogdata/wal",
-			StoreMetaDir:    "/ogdata/meta",
+			StoreDataDir:    naming.DataMountPath + "/data",
+			StoreWalDir:     naming.DataMountPath + "/wal",
+			StoreMetaDir:    naming.DataMountPath + "/meta",
 		},
 		Logging: LoggingConfig{
-			Path: "/ogdata/logs",
+			Path: naming.DataMountPath + "/logs",
 		},
 		Gossip: GossipConfig{
 			Enabled:       true,
@@ -106,6 +106,44 @@ func NewBaseConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
 	return buf.String(), nil
 }
 
+func UpdateConfig(tmpl, newConf string) (string, error) {
+	var tmplToml map[string]interface{}
+	var newToml map[string]interface{}
+
+	_, err := toml.Decode(tmpl, &tmplToml)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = toml.Decode(newConf, &newToml)
+	if err != nil {
+		return "", err
+	}
+
+	mapDeepCopy(newToml, tmplToml)
+
+	var buf bytes.Buffer
+	err = toml.NewEncoder(&buf).Encode(newToml)
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func mapDeepCopy(dst, src map[string]interface{}) {
+	for k, v := range src {
+		if inv, ok := v.(map[string]interface{}); !ok {
+			dst[k] = v
+		} else {
+			if _, ok := dst[k]; !ok {
+				dst[k] = make(map[string]interface{})
+			}
+			mapDeepCopy(dst[k].(map[string]interface{}), inv)
+		}
+	}
+}
+
+// TODO: delete these codes below
 func Merge(data ...string) (string, error) {
 	output := make(map[string]interface{})
 	for _, dt := range data {
