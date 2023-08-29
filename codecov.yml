@@ -1,0 +1,22 @@
+ignore:
+  - "tests"
+
+codecov:
+  notify:
+    wait_for_ci: false
+
+coverage:
+  status:
+    project:
+      default:
+        target: 10%
+        threshold: 100%
+        if_ci_failed: success
+    patch:
+      default:
+        target: 60%
+        threshold: 100%
+        if_ci_failed: success
+
+comment:                  # this is a top-level key
+  layout: "diff"
