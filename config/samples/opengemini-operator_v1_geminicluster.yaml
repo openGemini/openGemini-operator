@@ -7,6 +7,7 @@ spec:
   affinity:
     enablePodAntiAffinity: false
   enableHttpAuth: false
+  customConfigMapName: custom-config
   monitoring:
     type: string
   paused: false
