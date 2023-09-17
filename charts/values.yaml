@@ -12,8 +12,8 @@ controllerManager:
         memory: 64Mi
   manager:
     image:
-      repository: ghcr.io/opengemini/opengemini-operator:latest
-      tag: 814de3b
+      repository: ghcr.io/opengemini/opengemini-operator
+      tag: latest
     resources:
       limits:
         cpu: 500m

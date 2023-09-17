@@ -18,16 +18,16 @@ spec:
       resources:
         requests:
           storage: 1Gi
-    image: opengeminidb/opengemini-k8s:v1.0.1
+    image: opengeminidb/opengemini-k8s:v1.1.0-rc1
     replicas: 3
     resources:
       requests:
         cpu: 100m
         memory: 512Mi
   sql:
-    image: opengeminidb/opengemini-k8s:v1.0.1
+    image: opengeminidb/opengemini-k8s:v1.1.0-rc1
     port: "8086"
-    replicas: 2
+    replicas: 3
     resources:
       requests:
         cpu: 100m
@@ -39,7 +39,7 @@ spec:
       resources:
         requests:
           storage: 1Gi
-    image: opengeminidb/opengemini-k8s:v1.0.1
+    image: opengeminidb/opengemini-k8s:v1.1.0-rc1
     replicas: 3
     resources:
       requests:
