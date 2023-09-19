@@ -215,6 +215,10 @@ func (cluster *GeminiCluster) GetEnableHttpAuth() bool {
 	return false
 }
 
+func (cluster *GeminiCluster) GetEnableAffinity() bool {
+	return cluster.Spec.Affinity.EnablePodAntiAffinity
+}
+
 func (cluster *GeminiCluster) GetAdminUserSecretName() string {
 	return fmt.Sprintf("%v%v", cluster.Name, AdminUserSecretSuffix)
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/openGemini/openGemini-operator/pkg/opengemini/meta"
 	"github.com/openGemini/openGemini-operator/pkg/opengemini/sql"
 	"github.com/openGemini/openGemini-operator/pkg/opengemini/store"
+	"github.com/openGemini/openGemini-operator/pkg/specs"
 	"github.com/openGemini/openGemini-operator/pkg/utils"
 )
 
@@ -113,31 +114,35 @@ func generateInstanceStatefulSetIntent(
 ) {
 	sts.Annotations = utils.MergeLabels(
 		cluster.Spec.Metadata.GetAnnotationsOrNil())
+
+	baseLabels := map[string]string{
+		opengeminiv1.LabelCluster:     cluster.Name,
+		opengeminiv1.LabelInstanceSet: setName,
+	}
+	matchLabels := utils.MergeLabels(
+		baseLabels,
+		map[string]string{
+			opengeminiv1.LabelInstance: sts.Name,
+		},
+	)
+
 	sts.Labels = utils.MergeLabels(
 		cluster.Spec.Metadata.GetLabelsOrNil(),
-		map[string]string{
-			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: setName,
-			opengeminiv1.LabelInstance:    sts.Name,
-		})
+		matchLabels,
+	)
 	sts.Spec.Selector = &metav1.LabelSelector{
-		MatchLabels: map[string]string{
-			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: setName,
-			opengeminiv1.LabelInstance:    sts.Name,
-		},
+		MatchLabels: matchLabels,
 	}
 	sts.Spec.Template.Annotations = utils.MergeLabels(
 		cluster.Spec.Metadata.GetAnnotationsOrNil(),
 	)
 	sts.Spec.Template.Labels = utils.MergeLabels(
 		cluster.Spec.Metadata.GetLabelsOrNil(),
+		matchLabels,
 		map[string]string{
-			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: setName,
-			opengeminiv1.LabelInstance:    sts.Name,
-			opengeminiv1.LabelConfigHash:  cluster.Status.AppliedConfigHash,
+			opengeminiv1.LabelConfigHash: cluster.Status.AppliedConfigHash,
 		})
+	sts.Spec.Template.Spec.Affinity = specs.CreateAffinity(cluster.GetEnableAffinity(), baseLabels)
 	sts.Spec.Template.Spec.RestartPolicy = corev1.RestartPolicyAlways
 	sts.Spec.Template.Spec.ShareProcessNamespace = &[]bool{true}[0]
 	sts.Spec.Template.Spec.EnableServiceLinks = &[]bool{false}[0]
@@ -154,31 +159,35 @@ func generateInstanceDeploymentIntent(
 ) {
 	deploy.Annotations = utils.MergeLabels(
 		cluster.Spec.Metadata.GetAnnotationsOrNil())
+
+	baseLabels := map[string]string{
+		opengeminiv1.LabelCluster:     cluster.Name,
+		opengeminiv1.LabelInstanceSet: setName,
+	}
+	matchLabels := utils.MergeLabels(
+		baseLabels,
+		map[string]string{
+			opengeminiv1.LabelInstance: deploy.Name,
+		},
+	)
+
 	deploy.Labels = utils.MergeLabels(
 		cluster.Spec.Metadata.GetLabelsOrNil(),
-		map[string]string{
-			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: setName,
-			opengeminiv1.LabelInstance:    deploy.Name,
-		})
+		matchLabels,
+	)
 	deploy.Spec.Selector = &metav1.LabelSelector{
-		MatchLabels: map[string]string{
-			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: setName,
-			opengeminiv1.LabelInstance:    deploy.Name,
-		},
+		MatchLabels: matchLabels,
 	}
 	deploy.Spec.Template.Annotations = utils.MergeLabels(
 		cluster.Spec.Metadata.GetAnnotationsOrNil(),
 	)
 	deploy.Spec.Template.Labels = utils.MergeLabels(
 		cluster.Spec.Metadata.GetLabelsOrNil(),
+		matchLabels,
 		map[string]string{
-			opengeminiv1.LabelCluster:     cluster.Name,
-			opengeminiv1.LabelInstanceSet: setName,
-			opengeminiv1.LabelInstance:    deploy.Name,
-			opengeminiv1.LabelConfigHash:  cluster.Status.AppliedConfigHash,
+			opengeminiv1.LabelConfigHash: cluster.Status.AppliedConfigHash,
 		})
+	deploy.Spec.Template.Spec.Affinity = specs.CreateAffinity(cluster.GetEnableAffinity(), baseLabels)
 	deploy.Spec.Template.Spec.RestartPolicy = corev1.RestartPolicyAlways
 	deploy.Spec.Template.Spec.ShareProcessNamespace = &[]bool{true}[0]
 	deploy.Spec.Template.Spec.EnableServiceLinks = &[]bool{false}[0]
