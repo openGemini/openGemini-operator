@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	"github.com/openGemini/openGemini-operator/pkg/naming"
 	"github.com/openGemini/openGemini-operator/pkg/specs"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func DataVolumeMount() corev1.VolumeMount {

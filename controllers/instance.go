@@ -3,15 +3,16 @@ package controllers
 import (
 	"context"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	"github.com/openGemini/openGemini-operator/pkg/naming"
 	"github.com/openGemini/openGemini-operator/pkg/opengemini/meta"
 	"github.com/openGemini/openGemini-operator/pkg/opengemini/sql"
 	"github.com/openGemini/openGemini-operator/pkg/opengemini/store"
 	"github.com/openGemini/openGemini-operator/pkg/utils"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={get,create,patch}

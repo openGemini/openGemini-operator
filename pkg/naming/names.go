@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"path"
 
-	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 )
 
 const (

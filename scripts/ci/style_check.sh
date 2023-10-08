@@ -2,7 +2,7 @@
 
 echo "run style check for import pkg order"
 
-for file in $(find . -name '*.go'); do goimports-reviser -project-name none-pjn $file; done
+for file in $(find . -name '*.go'); do goimports-reviser -project-name github.com/openGemini/openGemini-operator $file; done
 
 GIT_STATUS=`git status | grep "Changes not staged for commit"`;
 if [ "$GIT_STATUS" = "" ]; then

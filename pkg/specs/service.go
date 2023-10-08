@@ -1,13 +1,14 @@
 package specs
 
 import (
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	"github.com/openGemini/openGemini-operator/pkg/naming"
 	"github.com/openGemini/openGemini-operator/pkg/opengemini"
 	"github.com/openGemini/openGemini-operator/pkg/utils"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func CreateClusterMaintainService(cluster *opengeminiv1.GeminiCluster) *corev1.Service {
