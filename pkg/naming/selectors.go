@@ -1,8 +1,9 @@
 package naming
 
 import (
-	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 )
 
 func ClusterInstances(cluster string) *metav1.LabelSelector {

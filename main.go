@@ -20,8 +20,6 @@ import (
 	"flag"
 	"os"
 
-	opengeminioperatorv1 "github.com/openGemini/openGemini-operator/api/v1"
-	"github.com/openGemini/openGemini-operator/controllers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -31,6 +29,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	opengeminioperatorv1 "github.com/openGemini/openGemini-operator/api/v1"
+	"github.com/openGemini/openGemini-operator/controllers"
 )
 
 var (

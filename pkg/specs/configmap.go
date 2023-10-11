@@ -1,8 +1,9 @@
 package specs
 
 import (
-	"github.com/openGemini/openGemini-operator/pkg/naming"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/openGemini/openGemini-operator/pkg/naming"
 )
 
 func ConfigFileConfigmapProjection(configmapName string) *corev1.ConfigMapProjection {
