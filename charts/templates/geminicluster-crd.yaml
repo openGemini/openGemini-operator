@@ -5,7 +5,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.10.0
   labels:
-  {{- include "charts.labels" . | nindent 4 }}
+  {{- include "chart.labels" . | nindent 4 }}
 spec:
   group: opengemini-operator.opengemini.org
   names:
