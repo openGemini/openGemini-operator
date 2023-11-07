@@ -13,7 +13,7 @@ controllerManager:
   manager:
     image:
       repository: ghcr.io/opengemini/opengemini-operator
-      tag: 0.0.1-alpha1
+      tag: 0.0.1
     resources:
       limits:
         cpu: 500m

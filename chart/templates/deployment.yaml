@@ -59,9 +59,9 @@ spec:
         securityContext: 
           allowPrivilegeEscalation: false
           capabilities:
-          drop:
-          - ALL
-      - args: 
+            drop:
+              - ALL
+      - args:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
@@ -90,8 +90,8 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
-          drop:
-          - ALL        
+            drop:
+              - ALL
       securityContext:
         runAsNonRoot: true
       serviceAccountName: {{ include "chart.fullname" . }}-controller-manager
