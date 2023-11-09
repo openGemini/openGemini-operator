@@ -10,6 +10,7 @@ import (
 	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	"github.com/openGemini/openGemini-operator/pkg/naming"
 	"github.com/openGemini/openGemini-operator/pkg/specs"
+	"github.com/openGemini/openGemini-operator/pkg/utils"
 )
 
 func DataVolumeMount() corev1.VolumeMount {
@@ -89,7 +90,7 @@ func InstancePod(
 			},
 			{
 				Name:  "DOMAIN",
-				Value: fmt.Sprintf("%s.%s.svc.cluster.local", inInstanceName, inCluster.Namespace),
+				Value: fmt.Sprintf("%s.%s.svc.%s", inInstanceName, inCluster.Namespace, utils.GetClusterDomain()),
 			},
 		},
 

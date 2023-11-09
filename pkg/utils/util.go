@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"math/rand"
+	"os"
 	"strings"
 )
 
@@ -50,4 +51,16 @@ func GenPassword(length, numSymbols, numDigits, numUpperLetters int) string {
 		inRune[i], inRune[j] = inRune[j], inRune[i]
 	})
 	return string(inRune)
+}
+
+func GetClusterDomain() string {
+	return getEnvWithDefault("KUBERNETES_CLUSTER_DOMAIN", "cluster.local")
+}
+
+func getEnvWithDefault(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return defaultValue
+	}
+	return value
 }
