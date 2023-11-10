@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
+	"github.com/openGemini/openGemini-operator/pkg/utils"
 )
 
 const (
@@ -50,9 +51,10 @@ func GenerateMetaInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1
 
 func GenerateMetaHeadlessSvc(cluster *opengeminiv1.GeminiCluster, index int) string {
 	return fmt.Sprintf(
-		"%s.%s.svc.cluster.local",
+		"%s.%s.svc.%s",
 		GenerateMetaInstance(cluster, index).Name,
 		cluster.Namespace,
+		utils.GetClusterDomain(),
 	)
 }
 
