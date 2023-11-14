@@ -32,7 +32,6 @@ func (r *GeminiClusterReconciler) reconcileMetaInstance(
 	}
 
 	generateInstanceStatefulSetIntent(ctx, cluster, naming.InstanceMeta, instance)
-	instance.Spec.ServiceName = instance.Name
 
 	pvc := &corev1.PersistentVolumeClaim{}
 	pvc.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("PersistentVolumeClaim"))
@@ -77,33 +76,35 @@ func (r *GeminiClusterReconciler) reconcileStoreInstance(
 	pvc.Spec = cluster.Spec.Meta.DataVolumeClaimSpec
 	instance.Spec.VolumeClaimTemplates = append(instance.Spec.VolumeClaimTemplates, *pvc)
 
-	store.InstancePod(ctx, cluster, pvc.Name, &instance.Spec.Template.Spec)
+	store.InstancePod(ctx, cluster, pvc.Name, instance.Name, &instance.Spec.Template.Spec)
 	if err := r.apply(ctx, instance); err != nil {
 		return err
 	}
 	return nil
 }
 
-// +kubebuilder:rbac:groups="apps",resources="deployments",verbs={get,create,patch}
+// +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={get,create,patch}
 
 func (r *GeminiClusterReconciler) reconcileSqlInstance(
 	ctx context.Context,
 	cluster *opengeminiv1.GeminiCluster,
+	index int,
 ) error {
-	instance := &appsv1.Deployment{}
-	instance.SetGroupVersionKind(appsv1.SchemeGroupVersion.WithKind("Deployment"))
-	instance.ObjectMeta = naming.GenerateSqlInstance(cluster)
+	instance := &appsv1.StatefulSet{}
+	instance.SetGroupVersionKind(appsv1.SchemeGroupVersion.WithKind("StatefulSet"))
+	instance.ObjectMeta = naming.GenerateSqlInstance(cluster, index)
 	if err := r.setControllerReference(cluster, instance); err != nil {
 		return err
 	}
 
-	generateInstanceDeploymentIntent(ctx, cluster, naming.InstanceSql, instance)
+	generateInstanceStatefulSetIntent(ctx, cluster, naming.InstanceSql, instance)
 
-	sql.InstancePod(ctx, cluster, &instance.Spec.Template.Spec)
+	sql.InstancePod(ctx, cluster, instance.Name, &instance.Spec.Template.Spec)
 	if err := r.apply(ctx, instance); err != nil {
 		return err
 	}
 	return nil
+
 }
 
 func generateInstanceStatefulSetIntent(
@@ -149,49 +150,5 @@ func generateInstanceStatefulSetIntent(
 
 	sts.Spec.RevisionHistoryLimit = &[]int32{0}[0]
 	sts.Spec.Replicas = &[]int32{1}[0]
-}
-
-func generateInstanceDeploymentIntent(
-	_ context.Context,
-	cluster *opengeminiv1.GeminiCluster,
-	setName string,
-	deploy *appsv1.Deployment,
-) {
-	deploy.Annotations = utils.MergeLabels(
-		cluster.Spec.Metadata.GetAnnotationsOrNil())
-
-	baseLabels := map[string]string{
-		opengeminiv1.LabelCluster:     cluster.Name,
-		opengeminiv1.LabelInstanceSet: setName,
-	}
-	matchLabels := utils.MergeLabels(
-		baseLabels,
-		map[string]string{
-			opengeminiv1.LabelInstance: deploy.Name,
-		},
-	)
-
-	deploy.Labels = utils.MergeLabels(
-		cluster.Spec.Metadata.GetLabelsOrNil(),
-		matchLabels,
-	)
-	deploy.Spec.Selector = &metav1.LabelSelector{
-		MatchLabels: matchLabels,
-	}
-	deploy.Spec.Template.Annotations = utils.MergeLabels(
-		cluster.Spec.Metadata.GetAnnotationsOrNil(),
-	)
-	deploy.Spec.Template.Labels = utils.MergeLabels(
-		cluster.Spec.Metadata.GetLabelsOrNil(),
-		matchLabels,
-		map[string]string{
-			opengeminiv1.LabelConfigHash: cluster.Status.AppliedConfigHash,
-		})
-	deploy.Spec.Template.Spec.Affinity = specs.CreateAffinity(cluster.GetEnableAffinity(), baseLabels)
-	deploy.Spec.Template.Spec.RestartPolicy = corev1.RestartPolicyAlways
-	deploy.Spec.Template.Spec.ShareProcessNamespace = &[]bool{true}[0]
-	deploy.Spec.Template.Spec.EnableServiceLinks = &[]bool{false}[0]
-
-	deploy.Spec.RevisionHistoryLimit = &[]int32{0}[0]
-	deploy.Spec.Replicas = cluster.Spec.SQL.Replicas
+	sts.Spec.ServiceName = sts.Name
 }

@@ -84,5 +84,5 @@ func Test_ReconcileClusterConfigMap(t *testing.T) {
 
 	err := r.reconcileClusterConfigMap(context.Background(), cluster)
 	assert.NoError(t, err)
-	assert.Equal(t, cluster.Status.AppliedConfigHash, "1e94d9f395144eaf69571fb83161d278")
+	assert.Equal(t, cluster.Status.AppliedConfigHash, "8c9a678a4eb1fb7a23d80efcccafa73f")
 }

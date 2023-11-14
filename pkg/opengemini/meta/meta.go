@@ -2,7 +2,6 @@ package meta
 
 import (
 	"context"
-	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -10,7 +9,6 @@ import (
 	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	"github.com/openGemini/openGemini-operator/pkg/naming"
 	"github.com/openGemini/openGemini-operator/pkg/specs"
-	"github.com/openGemini/openGemini-operator/pkg/utils"
 )
 
 func DataVolumeMount() corev1.VolumeMount {
@@ -64,7 +62,7 @@ func InstancePod(
 
 	container := corev1.Container{
 		Name:      naming.ContainerMeta,
-		Command:   []string{"entrypoint.sh"},
+		Command:   []string{naming.EntrypointFilePath()},
 		Image:     inCluster.Spec.Meta.Image,
 		Resources: inCluster.Spec.Meta.Resources,
 		Env: []corev1.EnvVar{
@@ -89,8 +87,8 @@ func InstancePod(
 				Value: "meta",
 			},
 			{
-				Name:  "DOMAIN",
-				Value: fmt.Sprintf("%s.%s.svc.%s", inInstanceName, inCluster.Namespace, utils.GetClusterDomain()),
+				Name:  "META_DOMAIN",
+				Value: naming.GenerateInstanceFQDN(inInstanceName, inCluster.Namespace),
 			},
 		},
 

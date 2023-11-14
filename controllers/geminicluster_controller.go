@@ -161,30 +161,22 @@ func (r *GeminiClusterReconciler) Reconcile(
 }
 
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={list}
-// +kubebuilder:rbac:groups="apps",resources="deployments",verbs={list}
 
 func (r *GeminiClusterReconciler) reconcileClusterStatus(
 	ctx context.Context,
 	cluster *opengeminiv1.GeminiCluster,
 ) error {
-	dbs := &appsv1.StatefulSetList{}
-	runners := &appsv1.DeploymentList{}
+	runners := &appsv1.StatefulSetList{}
 
 	selector, err := metav1.LabelSelectorAsSelector(naming.ClusterInstances(cluster.Name))
 	if err != nil {
 		return fmt.Errorf("build label selector failed: %w", err)
 	}
-	if err = r.List(ctx, dbs,
-		client.InNamespace(cluster.Namespace),
-		client.MatchingLabelsSelector{Selector: selector},
-	); err != nil {
-		return fmt.Errorf("list instance statefulsets failed: %w", err)
-	}
 	if err = r.List(ctx, runners,
 		client.InNamespace(cluster.Namespace),
 		client.MatchingLabelsSelector{Selector: selector},
 	); err != nil {
-		return fmt.Errorf("list instance deployments failed: %w", err)
+		return fmt.Errorf("list instance statefulsets failed: %w", err)
 	}
 
 	// Fill out status sorted by set name.
@@ -192,15 +184,6 @@ func (r *GeminiClusterReconciler) reconcileClusterStatus(
 	for _, name := range []string{naming.InstanceMeta, naming.InstanceStore, naming.InstanceSql} {
 		status := opengeminiv1.InstanceSetStatus{Name: name}
 
-		for _, instance := range dbs.Items {
-			if instance.Labels[opengeminiv1.LabelInstanceSet] != name {
-				continue
-			}
-
-			status.Replicas += instance.Status.Replicas
-			status.ReadyReplicas += instance.Status.ReadyReplicas
-			status.UpdatedReplicas += instance.Status.UpdatedReplicas
-		}
 		for _, instance := range runners.Items {
 			if instance.Labels[opengeminiv1.LabelInstanceSet] != name {
 				continue
@@ -240,6 +223,7 @@ func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
 	clusterConfigMap.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("ConfigMap"))
 	clusterConfigMap.Data = map[string]string{
 		naming.ConfigurationFile: confdata,
+		naming.EntrypointFile:    configfile.EntrypointScript,
 	}
 	confHash := utils.CalcMd5Hash(confdata)
 
@@ -297,20 +281,20 @@ func (r *GeminiClusterReconciler) reconcileClusterServices(
 		return err
 	}
 
-	MaintainService := specs.CreateClusterMaintainService(cluster)
-	cluster.SetInheritedMetadata(&MaintainService.ObjectMeta)
-	if err := r.setControllerReference(cluster, MaintainService); err != nil {
+	maintainService := specs.CreateClusterMaintainService(cluster)
+	cluster.SetInheritedMetadata(&maintainService.ObjectMeta)
+	if err := r.setControllerReference(cluster, maintainService); err != nil {
 		return fmt.Errorf("set controller reference failed: %w", err)
 	}
 
-	if err := resources.CreateIfNotFound(ctx, r.Client, MaintainService); client.IgnoreAlreadyExists(
+	if err := resources.CreateIfNotFound(ctx, r.Client, maintainService); client.IgnoreAlreadyExists(
 		err,
 	) != nil {
 		return err
 	}
 
-	metaHeadlessSvcs := specs.CreateMetaHeadlessServices(cluster)
-	for _, svc := range metaHeadlessSvcs {
+	instanceHeadlessSvcs := specs.CreateInstanceHeadlessServices(cluster)
+	for _, svc := range instanceHeadlessSvcs {
 		cluster.SetInheritedMetadata(&svc.ObjectMeta)
 		if err := r.setControllerReference(cluster, svc); err != nil {
 			return fmt.Errorf("set controller reference failed: %w", err)
@@ -453,8 +437,10 @@ func (r *GeminiClusterReconciler) reconcileClusterInstances(
 			return err
 		}
 	}
-	if err := r.reconcileSqlInstance(ctx, cluster); err != nil {
-		return err
+	for i := 0; i < int(*cluster.Spec.SQL.Replicas); i++ {
+		if err := r.reconcileSqlInstance(ctx, cluster, i); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -489,7 +475,6 @@ func IsOwnedByCluster(obj client.Object) (string, bool) {
 // +kubebuilder:rbac:groups="",resources="services",verbs={get,list,watch}
 // +kubebuilder:rbac:groups="",resources="secrets",verbs={get,list,watch}
 // +kubebuilder:rbac:groups="",resources="persistentvolumeclaims",verbs={get,list,watch}
-// +kubebuilder:rbac:groups="apps",resources="deployments",verbs={get,list,watch}
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={get,list,watch}
 
 // SetupWithManager sets up the controller with the Manager.
@@ -501,6 +486,5 @@ func (r *GeminiClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Secret{}).
 		Owns(&corev1.PersistentVolumeClaim{}).
 		Owns(&appsv1.StatefulSet{}).
-		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }
