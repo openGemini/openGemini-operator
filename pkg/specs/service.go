@@ -57,27 +57,41 @@ func CreateClusterReadWriteService(cluster *opengeminiv1.GeminiCluster) *corev1.
 	}
 }
 
-func CreateMetaHeadlessServices(cluster *opengeminiv1.GeminiCluster) []*corev1.Service {
+func instanceHeadlessService(cluster *opengeminiv1.GeminiCluster, instanceName, instanceSet string) *corev1.Service {
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      instanceName,
+			Namespace: cluster.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Type:      corev1.ServiceTypeClusterIP,
+			ClusterIP: corev1.ClusterIPNone,
+			Selector: utils.MergeLabels(
+				cluster.Spec.Metadata.GetLabelsOrNil(),
+				map[string]string{
+					opengeminiv1.LabelCluster:     cluster.Name,
+					opengeminiv1.LabelInstanceSet: instanceSet,
+					opengeminiv1.LabelInstance:    instanceName,
+				}),
+		},
+	}
+}
+
+func CreateInstanceHeadlessServices(cluster *opengeminiv1.GeminiCluster) []*corev1.Service {
 	svcs := []*corev1.Service{}
 	for i := 0; i < int(*cluster.Spec.Meta.Replicas); i++ {
 		metaInstanceName := naming.GenerateMetaInstance(cluster, i).Name
-		svc := &corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      metaInstanceName,
-				Namespace: cluster.Namespace,
-			},
-			Spec: corev1.ServiceSpec{
-				Type:      corev1.ServiceTypeClusterIP,
-				ClusterIP: corev1.ClusterIPNone,
-				Selector: utils.MergeLabels(
-					cluster.Spec.Metadata.GetLabelsOrNil(),
-					map[string]string{
-						opengeminiv1.LabelCluster:     cluster.Name,
-						opengeminiv1.LabelInstanceSet: naming.InstanceMeta,
-						opengeminiv1.LabelInstance:    metaInstanceName,
-					}),
-			},
-		}
+		svc := instanceHeadlessService(cluster, metaInstanceName, naming.InstanceMeta)
+		svcs = append(svcs, svc)
+	}
+	for i := 0; i < int(*cluster.Spec.Store.Replicas); i++ {
+		storeInstanceName := naming.GenerateStoreInstance(cluster, i).Name
+		svc := instanceHeadlessService(cluster, storeInstanceName, naming.InstanceStore)
+		svcs = append(svcs, svc)
+	}
+	for i := 0; i < int(*cluster.Spec.SQL.Replicas); i++ {
+		sqlInstanceName := naming.GenerateSqlInstance(cluster, i).Name
+		svc := instanceHeadlessService(cluster, sqlInstanceName, naming.InstanceSql)
 		svcs = append(svcs, svc)
 	}
 	return svcs

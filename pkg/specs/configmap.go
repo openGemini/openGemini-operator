@@ -16,6 +16,11 @@ func ConfigFileConfigmapProjection(configmapName string) *corev1.ConfigMapProjec
 				Key:  naming.ConfigurationFile,
 				Path: naming.ConfigurationFile,
 			},
+			{
+				Key:  naming.EntrypointFile,
+				Path: naming.EntrypointFile,
+				Mode: &[]int32{0o700}[0],
+			},
 		},
 	}
 }

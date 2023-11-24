@@ -26,6 +26,7 @@ type CommonConfig struct {
 type HttpConfig struct {
 	BindAddress string `toml:"bind-address"`
 	AuthEnabled bool   `toml:"auth-enabled"`
+	Domain      string `toml:"domain"`
 }
 
 type MetaConfig struct {
@@ -42,6 +43,7 @@ type DataConfig struct {
 	StoreDataDir    string `toml:"store-data-dir"`
 	StoreWalDir     string `toml:"store-wal-dir"`
 	StoreMetaDir    string `toml:"store-meta-dir"`
+	Domain          string `toml:"domain"`
 }
 
 type LoggingConfig struct {
@@ -60,7 +62,8 @@ func NewBaseConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
 	metaJoinAddrs := []string{}
 	metaGossipAddrs := []string{}
 	for i := 0; i < int(*cluster.Spec.Meta.Replicas); i++ {
-		host := naming.GenerateMetaHeadlessSvc(cluster, i)
+		metaInstance := naming.GenerateMetaInstance(cluster, i)
+		host := naming.GenerateInstanceFQDN(metaInstance.Name, metaInstance.Namespace)
 		metaJoinAddrs = append(metaJoinAddrs, fmt.Sprintf("%s:8092", host))
 		metaGossipAddrs = append(metaGossipAddrs, fmt.Sprintf("%s:8010", host))
 	}
@@ -72,6 +75,7 @@ func NewBaseConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
 		Http: HttpConfig{
 			BindAddress: "<HOST_IP>:8086",
 			AuthEnabled: cluster.GetEnableHttpAuth(),
+			Domain:      "<SQL_DOMAIN>",
 		},
 		Meta: MetaConfig{
 			BindAddress:     "<HOST_IP>:8088",
@@ -86,6 +90,7 @@ func NewBaseConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
 			StoreDataDir:    naming.DataMountPath + "/data",
 			StoreWalDir:     naming.DataMountPath + "/wal",
 			StoreMetaDir:    naming.DataMountPath + "/meta",
+			Domain:          "<STORE_DOMAIN>",
 		},
 		Logging: LoggingConfig{
 			Path: naming.DataMountPath + "/logs",

@@ -29,6 +29,7 @@ func ConfigVolumeMount() corev1.VolumeMount {
 func InstancePod(
 	ctx context.Context,
 	inCluster *opengeminiv1.GeminiCluster,
+	inInstanceName string,
 	outInstancePod *corev1.PodSpec,
 ) {
 	configVolumeMount := ConfigVolumeMount()
@@ -58,7 +59,7 @@ func InstancePod(
 
 	container := corev1.Container{
 		Name:      naming.ContainerSql,
-		Command:   []string{"entrypoint.sh"},
+		Command:   []string{naming.EntrypointFilePath()},
 		Image:     inCluster.Spec.SQL.Image,
 		Resources: inCluster.Spec.SQL.Resources,
 		Env: []corev1.EnvVar{
@@ -81,6 +82,10 @@ func InstancePod(
 			{
 				Name:  "APP",
 				Value: "sql",
+			},
+			{
+				Name:  "SQL_DOMAIN",
+				Value: naming.GenerateInstanceFQDN(inInstanceName, inCluster.Namespace),
 			},
 		},
 
