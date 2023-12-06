@@ -8,7 +8,7 @@ import (
 )
 
 // Use Server Side Apply
-func (r *GeminiClusterReconciler) apply(ctx context.Context, object client.Object) error {
+func (r *OpenGeminiClusterReconciler) apply(ctx context.Context, object client.Object) error {
 	// Generate an apply-patch by comparing the object to its zero value.
 	zero := reflect.New(reflect.TypeOf(object).Elem()).Interface()
 	data, err := client.MergeFrom(zero.(client.Object)).Data(object)
@@ -22,7 +22,7 @@ func (r *GeminiClusterReconciler) apply(ctx context.Context, object client.Objec
 	return err
 }
 
-func (r *GeminiClusterReconciler) patch(
+func (r *OpenGeminiClusterReconciler) patch(
 	ctx context.Context,
 	object client.Object,
 	patch client.Patch,

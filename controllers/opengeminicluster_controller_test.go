@@ -64,15 +64,15 @@ func (MockK8sController) SetControllerReference(owner, controlled metav1.Object,
 }
 
 func Test_ReconcileClusterConfigMap(t *testing.T) {
-	var r = &GeminiClusterReconciler{
+	var r = &OpenGeminiClusterReconciler{
 		Client:     &MockK8sClient{},
 		Controller: &MockK8sController{},
 	}
 
 	var metaReplicas int32 = 3
 
-	cluster := &opengeminiv1.GeminiCluster{
-		Spec: opengeminiv1.GeminiClusterSpec{
+	cluster := &opengeminiv1.OpenGeminiCluster{
+		Spec: opengeminiv1.OpenGeminiClusterSpec{
 			Meta: opengeminiv1.MetaSpec{
 				Replicas: &metaReplicas,
 			},

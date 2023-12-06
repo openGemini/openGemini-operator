@@ -55,9 +55,9 @@ rules:
   - patch
   - watch
 - apiGroups:
-  - opengemini-operator.opengemini.org
+  - opengemini.org
   resources:
-  - geminiclusters
+  - opengeminiclusters
   verbs:
   - create
   - delete
@@ -67,15 +67,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - opengemini-operator.opengemini.org
+  - opengemini.org
   resources:
-  - geminiclusters/finalizers
+  - opengeminiclusters/finalizers
   verbs:
   - update
 - apiGroups:
-  - opengemini-operator.opengemini.org
+  - opengemini.org
   resources:
-  - geminiclusters/status
+  - opengeminiclusters/status
   verbs:
   - get
   - patch

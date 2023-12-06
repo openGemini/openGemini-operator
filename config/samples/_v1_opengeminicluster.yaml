@@ -1,5 +1,5 @@
-apiVersion: opengemini-operator.opengemini.org/v1
-kind: GeminiCluster
+apiVersion: opengemini.org/v1
+kind: OpenGeminiCluster
 metadata:
   name: test-cluster
   namespace: opengemini

@@ -1,9 +1,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "chart.fullname" . }}-manager-role
+  name: {{ include "operator.fullname" . }}-manager-role
   labels:
-  {{- include "chart.labels" . | nindent 4 }}
+  {{- include "operator.labels" . | nindent 4 }}
 rules:
 - apiGroups:
   - ""
@@ -47,16 +47,6 @@ rules:
 - apiGroups:
   - apps
   resources:
-  - deployments
-  verbs:
-  - create
-  - get
-  - list
-  - patch
-  - watch
-- apiGroups:
-  - apps
-  resources:
   - statefulsets
   verbs:
   - create
@@ -65,9 +55,9 @@ rules:
   - patch
   - watch
 - apiGroups:
-  - opengemini-operator.opengemini.org
+  - opengemini.org
   resources:
-  - geminiclusters
+  - opengeminiclusters
   verbs:
   - create
   - delete
@@ -77,15 +67,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - opengemini-operator.opengemini.org
+  - opengemini.org
   resources:
-  - geminiclusters/finalizers
+  - opengeminiclusters/finalizers
   verbs:
   - update
 - apiGroups:
-  - opengemini-operator.opengemini.org
+  - opengemini.org
   resources:
-  - geminiclusters/status
+  - opengeminiclusters/status
   verbs:
   - get
   - patch
@@ -94,17 +84,17 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "chart.fullname" . }}-manager-rolebinding
+  name: {{ include "operator.fullname" . }}-manager-rolebinding
   labels:
     app.kubernetes.io/component: rbac
     app.kubernetes.io/created-by: opengemini-operator
     app.kubernetes.io/part-of: opengemini-operator
-  {{- include "chart.labels" . | nindent 4 }}
+  {{- include "operator.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: '{{ include "chart.fullname" . }}-manager-role'
+  name: '{{ include "operator.fullname" . }}-manager-role'
 subjects:
 - kind: ServiceAccount
-  name: '{{ include "chart.fullname" . }}-controller-manager'
+  name: '{{ include "operator.fullname" . }}-controller-manager'
   namespace: '{{ .Release.Namespace }}'

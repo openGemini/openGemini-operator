@@ -33,7 +33,7 @@ const (
 	FQDNLayout        = "%s.%s.%s.svc.%s" // pod-hostname.headless-service-name.namespace.svc.cluster.local
 )
 
-func ClusterConfigMap(cluster *opengeminiv1.GeminiCluster) metav1.ObjectMeta {
+func ClusterConfigMap(cluster *opengeminiv1.OpenGeminiCluster) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
 		Name:      cluster.Name + "-config",
@@ -48,21 +48,21 @@ func EntrypointFilePath() string {
 	return path.Join(ConfigMountPath, EntrypointFile)
 }
 
-func GenerateMetaInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1.ObjectMeta {
+func GenerateMetaInstance(cluster *opengeminiv1.OpenGeminiCluster, index int) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
 		Name:      cluster.Name + "-" + "meta" + "-" + fmt.Sprintf("%d", index),
 	}
 }
 
-func GenerateStoreInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1.ObjectMeta {
+func GenerateStoreInstance(cluster *opengeminiv1.OpenGeminiCluster, index int) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
 		Name:      cluster.Name + "-" + "store" + "-" + fmt.Sprintf("%d", index),
 	}
 }
 
-func GenerateSqlInstance(cluster *opengeminiv1.GeminiCluster, index int) metav1.ObjectMeta {
+func GenerateSqlInstance(cluster *opengeminiv1.OpenGeminiCluster, index int) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: cluster.Namespace,
 		Name:      cluster.Name + "-" + "sql" + "-" + fmt.Sprintf("%d", index),
@@ -80,7 +80,7 @@ func GenerateInstanceFQDN(instanceName, namespace string) string {
 }
 
 func GeneratePVC(
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 	instance *appsv1.StatefulSet,
 ) metav1.ObjectMeta {
 	return metav1.ObjectMeta{

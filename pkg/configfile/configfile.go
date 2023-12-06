@@ -58,7 +58,7 @@ type GossipConfig struct {
 	Members       []string `toml:"members"`
 }
 
-func NewBaseConfiguration(cluster *opengeminiv1.GeminiCluster) (string, error) {
+func NewBaseConfiguration(cluster *opengeminiv1.OpenGeminiCluster) (string, error) {
 	metaJoinAddrs := []string{}
 	metaGossipAddrs := []string{}
 	for i := 0; i < int(*cluster.Spec.Meta.Replicas); i++ {

@@ -28,8 +28,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// GeminiClusterSpec defines the desired state of GeminiCluster
-type GeminiClusterSpec struct {
+// OpenGeminiClusterSpec defines the desired state of OpenGeminiCluster
+type OpenGeminiClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
@@ -153,8 +153,8 @@ type InstanceSetStatus struct {
 	UpdatedReplicas int32 `json:"updatedReplicas,omitempty"`
 }
 
-// GeminiClusterStatus defines the observed state of GeminiCluster
-type GeminiClusterStatus struct {
+// OpenGeminiClusterStatus defines the observed state of OpenGeminiCluster
+type OpenGeminiClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
@@ -187,27 +187,27 @@ type GeminiClusterStatus struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:shortName=ogi
+//+kubebuilder:resource:shortName=ogc
 //+kubebuilder:subresource:status
 
-// GeminiCluster is the Schema for the geminiclusters API
-type GeminiCluster struct {
+// OpenGeminiCluster is the Schema for the opengeminiclusters API
+type OpenGeminiCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GeminiClusterSpec   `json:"spec,omitempty"`
-	Status GeminiClusterStatus `json:"status,omitempty"`
+	Spec   OpenGeminiClusterSpec   `json:"spec,omitempty"`
+	Status OpenGeminiClusterStatus `json:"status,omitempty"`
 }
 
-func (cluster *GeminiCluster) GetServiceMaintainName() string {
+func (cluster *OpenGeminiCluster) GetServiceMaintainName() string {
 	return fmt.Sprintf("%v%v", cluster.Name, ServiceMaintainSuffix)
 }
 
-func (cluster *GeminiCluster) GetServiceReadWriteName() string {
+func (cluster *OpenGeminiCluster) GetServiceReadWriteName() string {
 	return fmt.Sprintf("%v%v", cluster.Name, ServiceReadWriteSuffix)
 }
 
-func (cluster *GeminiCluster) GetEnableHttpAuth() bool {
+func (cluster *OpenGeminiCluster) GetEnableHttpAuth() bool {
 	if cluster.Spec.EnableHttpAuth != nil {
 		return *cluster.Spec.EnableHttpAuth
 	}
@@ -215,15 +215,15 @@ func (cluster *GeminiCluster) GetEnableHttpAuth() bool {
 	return false
 }
 
-func (cluster *GeminiCluster) GetEnableAffinity() bool {
+func (cluster *OpenGeminiCluster) GetEnableAffinity() bool {
 	return cluster.Spec.Affinity.EnablePodAntiAffinity
 }
 
-func (cluster *GeminiCluster) GetAdminUserSecretName() string {
+func (cluster *OpenGeminiCluster) GetAdminUserSecretName() string {
 	return fmt.Sprintf("%v%v", cluster.Name, AdminUserSecretSuffix)
 }
 
-func (cluster *GeminiCluster) SetInheritedMetadata(obj *metav1.ObjectMeta) {
+func (cluster *OpenGeminiCluster) SetInheritedMetadata(obj *metav1.ObjectMeta) {
 	obj.Annotations = utils.MergeLabels(cluster.Spec.Metadata.GetAnnotationsOrNil())
 	obj.Labels = utils.MergeLabels(cluster.Spec.Metadata.GetLabelsOrNil(),
 		map[string]string{
@@ -231,7 +231,7 @@ func (cluster *GeminiCluster) SetInheritedMetadata(obj *metav1.ObjectMeta) {
 		})
 }
 
-func (cluster *GeminiCluster) IsSqlReady() bool {
+func (cluster *OpenGeminiCluster) IsSqlReady() bool {
 	for _, status := range cluster.Status.InstanceSets {
 		if status.Name == "sql" {
 			if status.Replicas != 0 && status.ReadyReplicas == status.Replicas {
@@ -244,13 +244,13 @@ func (cluster *GeminiCluster) IsSqlReady() bool {
 
 //+kubebuilder:object:root=true
 
-// GeminiClusterList contains a list of GeminiCluster
-type GeminiClusterList struct {
+// OpenGeminiClusterList contains a list of OpenGeminiCluster
+type OpenGeminiClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []GeminiCluster `json:"items"`
+	Items           []OpenGeminiCluster `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&GeminiCluster{}, &GeminiClusterList{})
+	SchemeBuilder.Register(&OpenGeminiCluster{}, &OpenGeminiClusterList{})
 }

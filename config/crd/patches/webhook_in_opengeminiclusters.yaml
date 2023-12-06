@@ -2,7 +2,7 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: geminiclusters.opengemini-operator.opengemini.org
+  name: opengeminiclusters.opengemini.org
 spec:
   conversion:
     strategy: Webhook

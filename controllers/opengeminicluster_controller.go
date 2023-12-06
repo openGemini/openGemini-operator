@@ -43,15 +43,15 @@ import (
 )
 
 const (
-	ControllerManagerName = "openminicluster-controller"
+	ControllerManagerName = "opengeminicluster-controller"
 )
 
 type K8sController interface {
 	SetControllerReference(owner, controlled metav1.Object, scheme *runtime.Scheme) error
 }
 
-// GeminiClusterReconciler reconciles a GeminiCluster object
-type GeminiClusterReconciler struct {
+// OpenGeminiClusterReconciler reconciles a OpenGeminiCluster object
+type OpenGeminiClusterReconciler struct {
 	client.Client
 	Owner  client.FieldOwner
 	Scheme *runtime.Scheme
@@ -59,28 +59,28 @@ type GeminiClusterReconciler struct {
 	Controller K8sController
 }
 
-//+kubebuilder:rbac:groups=opengemini-operator.opengemini.org,resources=geminiclusters,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=opengemini-operator.opengemini.org,resources=geminiclusters/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=opengemini-operator.opengemini.org,resources=geminiclusters/finalizers,verbs=update
+//+kubebuilder:rbac:groups=opengemini.org,resources=opengeminiclusters,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=opengemini.org,resources=opengeminiclusters/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=opengemini.org,resources=opengeminiclusters/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the GeminiCluster object against the actual cluster state, and then
+// the OpenGeminiCluster object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.1/pkg/reconcile
-func (r *GeminiClusterReconciler) Reconcile(
+func (r *OpenGeminiClusterReconciler) Reconcile(
 	ctx context.Context,
 	req ctrl.Request,
 ) (result ctrl.Result, err error) {
 	log := log.FromContext(ctx)
 
-	cluster := &opengeminiv1.GeminiCluster{}
+	cluster := &opengeminiv1.OpenGeminiCluster{}
 	if err = r.Get(ctx, req.NamespacedName, cluster); err != nil {
-		log.Error(err, "unable to fetch GeminiCluster")
+		log.Error(err, "unable to fetch OpenGeminiCluster")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	log.Info(
@@ -98,7 +98,7 @@ func (r *GeminiClusterReconciler) Reconcile(
 
 	// Handle delete
 	if !cluster.DeletionTimestamp.IsZero() {
-		log.Info("GeminiCluster deleted", "name", req.Name, "namespace", req.Namespace)
+		log.Info("OpenGeminiCluster deleted", "name", req.Name, "namespace", req.Namespace)
 		return ctrl.Result{}, nil
 	}
 
@@ -162,9 +162,9 @@ func (r *GeminiClusterReconciler) Reconcile(
 
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={list}
 
-func (r *GeminiClusterReconciler) reconcileClusterStatus(
+func (r *OpenGeminiClusterReconciler) reconcileClusterStatus(
 	ctx context.Context,
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 ) error {
 	runners := &appsv1.StatefulSetList{}
 
@@ -202,9 +202,9 @@ func (r *GeminiClusterReconciler) reconcileClusterStatus(
 
 // +kubebuilder:rbac:groups="",resources="configmaps",verbs={get,create,patch}
 
-func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
+func (r *OpenGeminiClusterReconciler) reconcileClusterConfigMap(
 	ctx context.Context,
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 ) error {
 	confdata, err := configfile.NewBaseConfiguration(cluster)
 	if err != nil {
@@ -241,7 +241,7 @@ func (r *GeminiClusterReconciler) reconcileClusterConfigMap(
 }
 
 // getUpdatedConfig returns the updated config items if set config map
-func (r *GeminiClusterReconciler) getUpdatedConfig(ctx context.Context, cluster *opengeminiv1.GeminiCluster, tmplConf string) (string, error) {
+func (r *OpenGeminiClusterReconciler) getUpdatedConfig(ctx context.Context, cluster *opengeminiv1.OpenGeminiCluster, tmplConf string) (string, error) {
 	var customCM corev1.ConfigMap
 	err := r.Get(
 		ctx,
@@ -265,9 +265,9 @@ func (r *GeminiClusterReconciler) getUpdatedConfig(ctx context.Context, cluster 
 
 // +kubebuilder:rbac:groups="",resources="services",verbs={get,create}
 
-func (r *GeminiClusterReconciler) reconcileClusterServices(
+func (r *OpenGeminiClusterReconciler) reconcileClusterServices(
 	ctx context.Context,
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 ) error {
 	readWriteService := specs.CreateClusterReadWriteService(cluster)
 	cluster.SetInheritedMetadata(&readWriteService.ObjectMeta)
@@ -312,9 +312,9 @@ func (r *GeminiClusterReconciler) reconcileClusterServices(
 
 // +kubebuilder:rbac:groups="",resources="secrets",verbs={get,create,delete}
 
-func (r *GeminiClusterReconciler) reconcileAdminUserSecret(
+func (r *OpenGeminiClusterReconciler) reconcileAdminUserSecret(
 	ctx context.Context,
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 ) (err error) {
 	log := log.FromContext(ctx)
 	if cluster.Status.AdminUserInitialized {
@@ -365,9 +365,9 @@ func (r *GeminiClusterReconciler) reconcileAdminUserSecret(
 	return nil
 }
 
-func (r *GeminiClusterReconciler) reconcileAdminAccount(
+func (r *OpenGeminiClusterReconciler) reconcileAdminAccount(
 	ctx context.Context,
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 ) (err error) {
 	log := log.FromContext(ctx)
 	if cluster.Status.AdminUserInitialized {
@@ -422,9 +422,9 @@ func (r *GeminiClusterReconciler) reconcileAdminAccount(
 	return nil
 }
 
-func (r *GeminiClusterReconciler) reconcileClusterInstances(
+func (r *OpenGeminiClusterReconciler) reconcileClusterInstances(
 	ctx context.Context,
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 ) error {
 
 	for i := 0; i < int(*cluster.Spec.Meta.Replicas); i++ {
@@ -445,15 +445,15 @@ func (r *GeminiClusterReconciler) reconcileClusterInstances(
 	return nil
 }
 
-func (r *GeminiClusterReconciler) setControllerReference(
-	owner *opengeminiv1.GeminiCluster, controlled client.Object,
+func (r *OpenGeminiClusterReconciler) setControllerReference(
+	owner *opengeminiv1.OpenGeminiCluster, controlled client.Object,
 ) error {
 	return r.Controller.SetControllerReference(owner, controlled, r.Client.Scheme())
 	//return controllerutil.SetControllerReference(owner, controlled, r.Client.Scheme())
 }
 
-// func (r *GeminiClusterReconciler) setOwnerReference(
-// 	owner *opengeminiv1.GeminiCluster, controlled client.Object,
+// func (r *OpenGeminiClusterReconciler) setOwnerReference(
+// 	owner *opengeminiv1.OpenGeminiCluster, controlled client.Object,
 // ) error {
 // 	return controllerutil.SetOwnerReference(owner, controlled, r.Client.Scheme())
 // }
@@ -478,9 +478,9 @@ func IsOwnedByCluster(obj client.Object) (string, bool) {
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={get,list,watch}
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GeminiClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *OpenGeminiClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&opengeminiv1.GeminiCluster{}).
+		For(&opengeminiv1.OpenGeminiCluster{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.Secret{}).
