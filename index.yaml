@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  operator:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2023-12-06T12:29:50.846318478Z"
+    description: A Helm chart for Kubernetes
+    digest: 9d00c8674641b1aea8a182a63a397031dcbeb758e1f14f05db2a36de97278c11
+    name: operator
+    type: application
+    urls:
+    - https://github.com/openGemini/openGemini-operator/releases/download/operator-0.1.0/operator-0.1.0.tgz
+    version: 0.1.0
+generated: "2023-12-06T12:29:50.846360246Z"
