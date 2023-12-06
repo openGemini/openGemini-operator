@@ -11,7 +11,7 @@ import (
 	"github.com/openGemini/openGemini-operator/pkg/utils"
 )
 
-func CreateClusterMaintainService(cluster *opengeminiv1.GeminiCluster) *corev1.Service {
+func CreateClusterMaintainService(cluster *opengeminiv1.OpenGeminiCluster) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cluster.GetServiceMaintainName(),
@@ -34,7 +34,7 @@ func CreateClusterMaintainService(cluster *opengeminiv1.GeminiCluster) *corev1.S
 	}
 }
 
-func CreateClusterReadWriteService(cluster *opengeminiv1.GeminiCluster) *corev1.Service {
+func CreateClusterReadWriteService(cluster *opengeminiv1.OpenGeminiCluster) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cluster.GetServiceReadWriteName(),
@@ -57,7 +57,7 @@ func CreateClusterReadWriteService(cluster *opengeminiv1.GeminiCluster) *corev1.
 	}
 }
 
-func instanceHeadlessService(cluster *opengeminiv1.GeminiCluster, instanceName, instanceSet string) *corev1.Service {
+func instanceHeadlessService(cluster *opengeminiv1.OpenGeminiCluster, instanceName, instanceSet string) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instanceName,
@@ -77,7 +77,7 @@ func instanceHeadlessService(cluster *opengeminiv1.GeminiCluster, instanceName, 
 	}
 }
 
-func CreateInstanceHeadlessServices(cluster *opengeminiv1.GeminiCluster) []*corev1.Service {
+func CreateInstanceHeadlessServices(cluster *opengeminiv1.OpenGeminiCluster) []*corev1.Service {
 	svcs := []*corev1.Service{}
 	for i := 0; i < int(*cluster.Spec.Meta.Replicas); i++ {
 		metaInstanceName := naming.GenerateMetaInstance(cluster, i).Name

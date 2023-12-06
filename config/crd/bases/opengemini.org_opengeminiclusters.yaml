@@ -5,22 +5,22 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.10.0
   creationTimestamp: null
-  name: geminiclusters.opengemini-operator.opengemini.org
+  name: opengeminiclusters.opengemini.org
 spec:
-  group: opengemini-operator.opengemini.org
+  group: opengemini.org
   names:
-    kind: GeminiCluster
-    listKind: GeminiClusterList
-    plural: geminiclusters
+    kind: OpenGeminiCluster
+    listKind: OpenGeminiClusterList
+    plural: opengeminiclusters
     shortNames:
-    - ogi
-    singular: geminicluster
+    - ogc
+    singular: opengeminicluster
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: GeminiCluster is the Schema for the geminiclusters API
+        description: OpenGeminiCluster is the Schema for the opengeminiclusters API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -35,7 +35,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: GeminiClusterSpec defines the desired state of GeminiCluster
+            description: OpenGeminiClusterSpec defines the desired state of OpenGeminiCluster
             properties:
               affinity:
                 properties:
@@ -576,7 +576,7 @@ spec:
             - version
             type: object
           status:
-            description: GeminiClusterStatus defines the observed state of GeminiCluster
+            description: OpenGeminiClusterStatus defines the observed state of OpenGeminiCluster
             properties:
               adminUserInitialized:
                 default: false

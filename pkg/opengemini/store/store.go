@@ -28,7 +28,7 @@ func ConfigVolumeMount() corev1.VolumeMount {
 
 func InstancePod(
 	ctx context.Context,
-	inCluster *opengeminiv1.GeminiCluster,
+	inCluster *opengeminiv1.OpenGeminiCluster,
 	inDataVolumeName, inInstanceName string,
 	outInstancePod *corev1.PodSpec,
 ) {

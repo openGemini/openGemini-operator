@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	opengeminioperatorv1 "github.com/openGemini/openGemini-operator/api/v1"
+	opengeminiv1 "github.com/openGemini/openGemini-operator/api/v1"
 	"github.com/openGemini/openGemini-operator/controllers"
 )
 
@@ -42,7 +42,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(opengeminioperatorv1.AddToScheme(scheme))
+	utilruntime.Must(opengeminiv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -93,14 +93,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.GeminiClusterReconciler{
+	if err = (&controllers.OpenGeminiClusterReconciler{
 		Client: mgr.GetClient(),
 		Owner:  controllers.ControllerManagerName,
 		Scheme: mgr.GetScheme(),
 
 		Controller: &k8sController{},
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "GeminiCluster")
+		setupLog.Error(err, "unable to create controller", "controller", "OpenGeminiCluster")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

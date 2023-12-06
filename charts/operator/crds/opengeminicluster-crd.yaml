@@ -1,26 +1,25 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: geminiclusters.opengemini-operator.opengemini.org
   annotations:
     controller-gen.kubebuilder.io/version: v0.10.0
-  labels:
-  {{- include "chart.labels" . | nindent 4 }}
+  creationTimestamp: null
+  name: opengeminiclusters.opengemini.org
 spec:
-  group: opengemini-operator.opengemini.org
+  group: opengemini.org
   names:
-    kind: GeminiCluster
-    listKind: GeminiClusterList
-    plural: geminiclusters
+    kind: OpenGeminiCluster
+    listKind: OpenGeminiClusterList
+    plural: opengeminiclusters
     shortNames:
-    - ogi
-    singular: geminicluster
+    - ogc
+    singular: opengeminicluster
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: GeminiCluster is the Schema for the geminiclusters API
+        description: OpenGeminiCluster is the Schema for the opengeminiclusters API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -35,7 +34,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: GeminiClusterSpec defines the desired state of GeminiCluster
+            description: OpenGeminiClusterSpec defines the desired state of OpenGeminiCluster
             properties:
               affinity:
                 properties:
@@ -56,7 +55,8 @@ spec:
                 properties:
                   dataVolumeClaimSpec:
                     description: PersistentVolumeClaimSpec describes the common attributes
-                      of storage devices and allows a Source for provider-specific attributes
+                      of storage devices and allows a Source for provider-specific
+                      attributes
                     properties:
                       accessModes:
                         description: 'accessModes contains the desired access modes
@@ -68,11 +68,11 @@ spec:
                         description: 'dataSource field can be used to specify either:
                           * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot)
                           * An existing PVC (PersistentVolumeClaim) If the provisioner
-                          or an external controller can support the specified data source,
-                          it will create a new volume based on the contents of the specified
-                          data source. If the AnyVolumeDataSource feature gate is enabled,
-                          this field will always have the same contents as the DataSourceRef
-                          field.'
+                          or an external controller can support the specified data
+                          source, it will create a new volume based on the contents
+                          of the specified data source. If the AnyVolumeDataSource
+                          feature gate is enabled, this field will always have the
+                          same contents as the DataSourceRef field.'
                         properties:
                           apiGroup:
                             description: APIGroup is the group for the resource being
@@ -93,25 +93,25 @@ spec:
                         x-kubernetes-map-type: atomic
                       dataSourceRef:
                         description: 'dataSourceRef specifies the object from which
-                          to populate the volume with data, if a non-empty volume is
-                          desired. This may be any local object from a non-empty API
-                          group (non core object) or a PersistentVolumeClaim object.
+                          to populate the volume with data, if a non-empty volume
+                          is desired. This may be any local object from a non-empty
+                          API group (non core object) or a PersistentVolumeClaim object.
                           When this field is specified, volume binding will only succeed
                           if the type of the specified object matches some installed
-                          volume populator or dynamic provisioner. This field will replace
-                          the functionality of the DataSource field and as such if both
-                          fields are non-empty, they must have the same value. For backwards
-                          compatibility, both fields (DataSource and DataSourceRef)
-                          will be set to the same value automatically if one of them
-                          is empty and the other is non-empty. There are two important
-                          differences between DataSource and DataSourceRef: * While
-                          DataSource only allows two specific types of objects, DataSourceRef
-                          allows any non-core object, as well as PersistentVolumeClaim
+                          volume populator or dynamic provisioner. This field will
+                          replace the functionality of the DataSource field and as
+                          such if both fields are non-empty, they must have the same
+                          value. For backwards compatibility, both fields (DataSource
+                          and DataSourceRef) will be set to the same value automatically
+                          if one of them is empty and the other is non-empty. There
+                          are two important differences between DataSource and DataSourceRef:
+                          * While DataSource only allows two specific types of objects,
+                          DataSourceRef allows any non-core object, as well as PersistentVolumeClaim
                           objects. * While DataSource ignores disallowed values (dropping
-                          them), DataSourceRef preserves all values, and generates an
-                          error if a disallowed value is specified. (Beta) Using this
-                          field requires the AnyVolumeDataSource feature gate to be
-                          enabled.'
+                          them), DataSourceRef preserves all values, and generates
+                          an error if a disallowed value is specified. (Beta) Using
+                          this field requires the AnyVolumeDataSource feature gate
+                          to be enabled.'
                         properties:
                           apiGroup:
                             description: APIGroup is the group for the resource being
@@ -135,8 +135,8 @@ spec:
                           volume should have. If RecoverVolumeExpansionFailure feature
                           is enabled users are allowed to specify resource requirements
                           that are lower than previous value but must still be higher
-                          than capacity recorded in the status field of the claim. More
-                          info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources'
+                          than capacity recorded in the status field of the claim.
+                          More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources'
                         properties:
                           limits:
                             additionalProperties:
@@ -155,11 +155,11 @@ spec:
                               - type: string
                               pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                               x-kubernetes-int-or-string: true
-                            description: 'Requests describes the minimum amount of compute
-                              resources required. If Requests is omitted for a container,
-                              it defaults to Limits if that is explicitly specified,
-                              otherwise to an implementation-defined value. More info:
-                              https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                            description: 'Requests describes the minimum amount of
+                              compute resources required. If Requests is omitted for
+                              a container, it defaults to Limits if that is explicitly
+                              specified, otherwise to an implementation-defined value.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                             type: object
                         type: object
                       selector:
@@ -171,8 +171,8 @@ spec:
                               requirements. The requirements are ANDed.
                             items:
                               description: A label selector requirement is a selector
-                                that contains values, a key, and an operator that relates
-                                the key and values.
+                                that contains values, a key, and an operator that
+                                relates the key and values.
                               properties:
                                 key:
                                   description: key is the label key that the selector
@@ -187,8 +187,9 @@ spec:
                                   description: values is an array of string values.
                                     If the operator is In or NotIn, the values array
                                     must be non-empty. If the operator is Exists or
-                                    DoesNotExist, the values array must be empty. This
-                                    array is replaced during a strategic merge patch.
+                                    DoesNotExist, the values array must be empty.
+                                    This array is replaced during a strategic merge
+                                    patch.
                                   items:
                                     type: string
                                   type: array
@@ -346,7 +347,8 @@ spec:
                 properties:
                   dataVolumeClaimSpec:
                     description: PersistentVolumeClaimSpec describes the common attributes
-                      of storage devices and allows a Source for provider-specific attributes
+                      of storage devices and allows a Source for provider-specific
+                      attributes
                     properties:
                       accessModes:
                         description: 'accessModes contains the desired access modes
@@ -358,11 +360,11 @@ spec:
                         description: 'dataSource field can be used to specify either:
                           * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot)
                           * An existing PVC (PersistentVolumeClaim) If the provisioner
-                          or an external controller can support the specified data source,
-                          it will create a new volume based on the contents of the specified
-                          data source. If the AnyVolumeDataSource feature gate is enabled,
-                          this field will always have the same contents as the DataSourceRef
-                          field.'
+                          or an external controller can support the specified data
+                          source, it will create a new volume based on the contents
+                          of the specified data source. If the AnyVolumeDataSource
+                          feature gate is enabled, this field will always have the
+                          same contents as the DataSourceRef field.'
                         properties:
                           apiGroup:
                             description: APIGroup is the group for the resource being
@@ -383,25 +385,25 @@ spec:
                         x-kubernetes-map-type: atomic
                       dataSourceRef:
                         description: 'dataSourceRef specifies the object from which
-                          to populate the volume with data, if a non-empty volume is
-                          desired. This may be any local object from a non-empty API
-                          group (non core object) or a PersistentVolumeClaim object.
+                          to populate the volume with data, if a non-empty volume
+                          is desired. This may be any local object from a non-empty
+                          API group (non core object) or a PersistentVolumeClaim object.
                           When this field is specified, volume binding will only succeed
                           if the type of the specified object matches some installed
-                          volume populator or dynamic provisioner. This field will replace
-                          the functionality of the DataSource field and as such if both
-                          fields are non-empty, they must have the same value. For backwards
-                          compatibility, both fields (DataSource and DataSourceRef)
-                          will be set to the same value automatically if one of them
-                          is empty and the other is non-empty. There are two important
-                          differences between DataSource and DataSourceRef: * While
-                          DataSource only allows two specific types of objects, DataSourceRef
-                          allows any non-core object, as well as PersistentVolumeClaim
+                          volume populator or dynamic provisioner. This field will
+                          replace the functionality of the DataSource field and as
+                          such if both fields are non-empty, they must have the same
+                          value. For backwards compatibility, both fields (DataSource
+                          and DataSourceRef) will be set to the same value automatically
+                          if one of them is empty and the other is non-empty. There
+                          are two important differences between DataSource and DataSourceRef:
+                          * While DataSource only allows two specific types of objects,
+                          DataSourceRef allows any non-core object, as well as PersistentVolumeClaim
                           objects. * While DataSource ignores disallowed values (dropping
-                          them), DataSourceRef preserves all values, and generates an
-                          error if a disallowed value is specified. (Beta) Using this
-                          field requires the AnyVolumeDataSource feature gate to be
-                          enabled.'
+                          them), DataSourceRef preserves all values, and generates
+                          an error if a disallowed value is specified. (Beta) Using
+                          this field requires the AnyVolumeDataSource feature gate
+                          to be enabled.'
                         properties:
                           apiGroup:
                             description: APIGroup is the group for the resource being
@@ -425,8 +427,8 @@ spec:
                           volume should have. If RecoverVolumeExpansionFailure feature
                           is enabled users are allowed to specify resource requirements
                           that are lower than previous value but must still be higher
-                          than capacity recorded in the status field of the claim. More
-                          info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources'
+                          than capacity recorded in the status field of the claim.
+                          More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources'
                         properties:
                           limits:
                             additionalProperties:
@@ -445,11 +447,11 @@ spec:
                               - type: string
                               pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                               x-kubernetes-int-or-string: true
-                            description: 'Requests describes the minimum amount of compute
-                              resources required. If Requests is omitted for a container,
-                              it defaults to Limits if that is explicitly specified,
-                              otherwise to an implementation-defined value. More info:
-                              https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                            description: 'Requests describes the minimum amount of
+                              compute resources required. If Requests is omitted for
+                              a container, it defaults to Limits if that is explicitly
+                              specified, otherwise to an implementation-defined value.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
                             type: object
                         type: object
                       selector:
@@ -461,8 +463,8 @@ spec:
                               requirements. The requirements are ANDed.
                             items:
                               description: A label selector requirement is a selector
-                                that contains values, a key, and an operator that relates
-                                the key and values.
+                                that contains values, a key, and an operator that
+                                relates the key and values.
                               properties:
                                 key:
                                   description: key is the label key that the selector
@@ -477,8 +479,9 @@ spec:
                                   description: values is an array of string values.
                                     If the operator is In or NotIn, the values array
                                     must be non-empty. If the operator is Exists or
-                                    DoesNotExist, the values array must be empty. This
-                                    array is replaced during a strategic merge patch.
+                                    DoesNotExist, the values array must be empty.
+                                    This array is replaced during a strategic merge
+                                    patch.
                                   items:
                                     type: string
                                   type: array
@@ -572,7 +575,7 @@ spec:
             - version
             type: object
           status:
-            description: GeminiClusterStatus defines the observed state of GeminiCluster
+            description: OpenGeminiClusterStatus defines the observed state of OpenGeminiCluster
             properties:
               adminUserInitialized:
                 default: false
@@ -588,8 +591,8 @@ spec:
                   description: "Condition contains details for one aspect of the current
                     state of this API Resource. --- This struct is intended for direct
                     use as an array at the field path .status.conditions.  For example,
-                    \n type FooStatus struct{ // Represents the observations of a foo's
-                    current state. // Known .status.conditions.type are: \"Available\",
+                    \n type FooStatus struct{ // Represents the observations of a
+                    foo's current state. // Known .status.conditions.type are: \"Available\",
                     \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
                     // +listType=map // +listMapKey=type Conditions []metav1.Condition
                     `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"
@@ -603,8 +606,8 @@ spec:
                       format: date-time
                       type: string
                     message:
-                      description: message is a human readable message indicating details
-                        about the transition. This may be an empty string.
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
                       maxLength: 32768
                       type: string
                     observedGeneration:
@@ -618,11 +621,11 @@ spec:
                       type: integer
                     reason:
                       description: reason contains a programmatic identifier indicating
-                        the reason for the condition's last transition. Producers of
-                        specific condition types may define expected values and meanings
-                        for this field, and whether the values are considered a guaranteed
-                        API. The value should be a CamelCase string. This field may
-                        not be empty.
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
                       maxLength: 1024
                       minLength: 1
                       pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
@@ -698,9 +701,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

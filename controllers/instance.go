@@ -19,9 +19,9 @@ import (
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={get,create,patch}
 // +kubebuilder:rbac:groups="",resources="persistentvolumeclaims",verbs={get,create,patch}
 
-func (r *GeminiClusterReconciler) reconcileMetaInstance(
+func (r *OpenGeminiClusterReconciler) reconcileMetaInstance(
 	ctx context.Context,
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 	index int,
 ) error {
 	instance := &appsv1.StatefulSet{}
@@ -53,9 +53,9 @@ func (r *GeminiClusterReconciler) reconcileMetaInstance(
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={get,create,patch}
 // +kubebuilder:rbac:groups="",resources="persistentvolumeclaims",verbs={get,create,patch}
 
-func (r *GeminiClusterReconciler) reconcileStoreInstance(
+func (r *OpenGeminiClusterReconciler) reconcileStoreInstance(
 	ctx context.Context,
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 	index int,
 ) error {
 	instance := &appsv1.StatefulSet{}
@@ -85,9 +85,9 @@ func (r *GeminiClusterReconciler) reconcileStoreInstance(
 
 // +kubebuilder:rbac:groups="apps",resources="statefulsets",verbs={get,create,patch}
 
-func (r *GeminiClusterReconciler) reconcileSqlInstance(
+func (r *OpenGeminiClusterReconciler) reconcileSqlInstance(
 	ctx context.Context,
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 	index int,
 ) error {
 	instance := &appsv1.StatefulSet{}
@@ -109,7 +109,7 @@ func (r *GeminiClusterReconciler) reconcileSqlInstance(
 
 func generateInstanceStatefulSetIntent(
 	_ context.Context,
-	cluster *opengeminiv1.GeminiCluster,
+	cluster *opengeminiv1.OpenGeminiCluster,
 	setName string,
 	sts *appsv1.StatefulSet,
 ) {
