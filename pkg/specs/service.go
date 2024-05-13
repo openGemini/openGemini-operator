@@ -21,14 +21,15 @@ func CreateClusterMaintainService(cluster *opengeminiv1.OpenGeminiCluster) *core
 			Type: corev1.ServiceTypeClusterIP,
 			Ports: []corev1.ServicePort{
 				{
-					Name:       "maintain",
+					Name:       opengemini.MaintainPortName,
 					Protocol:   corev1.ProtocolTCP,
 					TargetPort: intstr.FromInt(opengemini.MaintainPort),
 					Port:       opengemini.MaintainPort,
 				},
 			},
 			Selector: map[string]string{
-				opengeminiv1.LabelCluster: cluster.Name,
+				opengeminiv1.LabelCluster:     cluster.Name,
+				opengeminiv1.LabelInstanceSet: naming.InstanceMeta,
 			},
 		},
 	}
@@ -44,14 +45,15 @@ func CreateClusterReadWriteService(cluster *opengeminiv1.OpenGeminiCluster) *cor
 			Type: corev1.ServiceTypeClusterIP,
 			Ports: []corev1.ServicePort{
 				{
-					Name:       "readwrite",
+					Name:       opengemini.HttpPortName,
 					Protocol:   corev1.ProtocolTCP,
 					TargetPort: intstr.FromInt(opengemini.HttpPort),
 					Port:       opengemini.HttpPort,
 				},
 			},
 			Selector: map[string]string{
-				opengeminiv1.LabelCluster: cluster.Name,
+				opengeminiv1.LabelCluster:     cluster.Name,
+				opengeminiv1.LabelInstanceSet: naming.InstanceSql,
 			},
 		},
 	}
