@@ -8,7 +8,7 @@ controllerManager:
         drop:
         - ALL
     image:
-      repository: ghcr.io/opengemini/opengemini-operator
+      repository: opengeminidb/opengemini-operator
       tag: latest
     resources:
       limits:
